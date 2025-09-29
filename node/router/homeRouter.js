@@ -10,9 +10,10 @@ router.get('/', (req,res)=>{
 })
 
 router.post('/login',async (req,res)=>{
-    console.log("로그인 라우터" + req.body);
     const result = await loginMember(req.body);
-    res.status(result.code).send(result.message);
+    console.log("로그인 라우터");
+    console.log(result);
+    res.status(result.code).json(result);
 })
 
 router.post('/register',async (req,res)=>{

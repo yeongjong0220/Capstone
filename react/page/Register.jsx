@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom';
 import { ButtonGroup, ToggleButton, Button } from 'react-bootstrap'
@@ -15,6 +15,9 @@ const Register = () => {
   const [gender, setGender] = useState('male');
   const [region, setRegion] = useState('경기');
   const [age, setAge] = useState('');
+
+  // 토큰
+  const token = localStorage.getItem('authToken');
 
   const radiosGender = [
     { name: '남', value: 'male' },
@@ -53,10 +56,10 @@ const Register = () => {
         age: age
       };
     }
-    else if (activeTab === 'enterprise') {
+    else if (activeTab === 'enterprise') { // 기업의 회원가입 데이터
       registerData = {
         type: activeTab,
-        id: idOrCode,
+        id: idOrCode, 
         password: password,
       };
     }
@@ -75,6 +78,15 @@ const Register = () => {
       })
     nav('/');
   }
+
+  useEffect(() => { // 렌더링 or 의존성 배열의 값이 변경될때 자동 실행
+          // 토큰이 존재할 경우
+          if (token) { 
+              nav('/', { replace: true }); 
+              // replace: true 옵션은 현재 로그인 페이지를 히스토리에서 대체하여
+              // 사용자가 뒤로 가기 버튼을 눌러도 다시 로그인 페이지로 돌아오지 못하게 합니다.
+          }
+      }, [token, nav]); 
 
   return (
     <div className="d-flex align-items-center py-4 bg-body-tertiary" style={{ minHeight: '100vh' }}>

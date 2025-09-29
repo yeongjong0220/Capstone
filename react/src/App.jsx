@@ -1,6 +1,6 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { useState } from 'react'
-import { AuthProvider } from '../contexts/AuthContextEx'
+import {AuthProvider} from '../contexts/AuthContext.jsx'
 import 'bootstrap/dist/css/bootstrap.min.css'
 // import './App.css'
 
@@ -19,14 +19,14 @@ function App() {
 
   return (
     <>
-      <BrowserRouter>    {/* (2) 라우팅 기능 */}
-        <AuthProvider>     {/*(3) 인증 상태 */}
-        <Header />
+      <BrowserRouter> {/* (2) 라우팅 기능 */}
+        <AuthProvider> {/*(3) 인증 상태 */}
+          <Header />
           <Routes>
-            <Route path = "/" element= {<Home />} />
-            <Route path = "/loginEx" element={<LoginEx />} />
-            <Route path = "/login" element={<Login />} />
-            <Route path = "/register" element={<Register />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/loginEx" element={<LoginEx />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>
