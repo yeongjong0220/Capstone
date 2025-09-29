@@ -46,13 +46,12 @@ const Login = () => {
 
     const loginData = {
       type: activeTab,
-      id: idOrCode, // 개인은 ID 필드를 이메일로 사용
+      id: idOrCode,
       password: password,
     };
-    console.log('개인 로그인 요청 데이터:', loginData);
-    // TODO: 개인용 백엔드 API 호출 로직
+    console.log('개인 or 기업 로그인 요청 데이터:', loginData);
     axios.post(BACK_LOGIN, loginData)
-      .then((res) => {
+      .then( (res) => {
         console.log(res);
         const token = res.data.token
         localStorage.setItem('authToken', token);

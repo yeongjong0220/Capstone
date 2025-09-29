@@ -38,7 +38,7 @@ async function loginMember(registerData) {
                 const token = jwt.sign(
                     payload,          // 토큰에 담을 정보
                     JWT_SECRET,       // 서명에 사용하는 비밀 키
-                    { expiresIn: '5m' } // 토큰 만료 시간, + 만료 시간은 백엔드 서버에서 검증함
+                    { expiresIn: '5m' } // 토큰 만료 시간, + 만료 시간은 백엔드 서버에서 검증함 ()
                 );
                 return { success: true, code: 200, token: token }; // code는 꼭 넣을 것
             }
@@ -49,8 +49,8 @@ async function loginMember(registerData) {
 
         // 그냥 기업일때
         else if (type == 'enterprise') {
-            const [result] = await conn.execute("insert into company(idcompany, password) value(?,?)",
-                [id, hashedPw]);
+            const [result] = await conn.execute("select * from company where idcompany = ?",
+                [id]);
 
             // 해싱된 비번이랑 비교
             const storedHashedPw = result[0].password;
@@ -59,13 +59,13 @@ async function loginMember(registerData) {
             if (isMatch) {
                 // jwt 토큰 발급
                 const payload = {
-                    id: result[0].id,          // DB의 고유 ID
+                    id: result[0].idcompany,          // DB의 고유 ID
                     type: result[0].type       // 계정 유형 (개인/기업)
                 };
                 const token = jwt.sign(
                     payload,          // 토큰에 담을 정보
                     JWT_SECRET,       // 서명에 사용하는 비밀 키
-                    { expiresIn: '1h' } // 토큰 만료 시간
+                    { expiresIn: '5m' } // 토큰 만료 시간
                 );
 
                 return { success: true, code : 200, token : token };

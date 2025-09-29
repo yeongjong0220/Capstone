@@ -56,10 +56,10 @@ const Register = () => {
         age: age
       };
     }
-    else if (activeTab === 'enterprise') {
+    else if (activeTab === 'enterprise') { // 기업의 회원가입 데이터
       registerData = {
         type: activeTab,
-        id: idOrCode,
+        id: idOrCode, 
         password: password,
       };
     }
