@@ -12,6 +12,9 @@ import LoginEx from '../page/LoginEx'
 import Login from '../page/Login'
 import Register from '../page/Register'
 import Home from '../page/Home'
+import Board from '../page/Board.jsx'
+import BoardWrite from '../page/BoardWrite.jsx'
+import BoardView from '../page/BoardView.jsx'
 
 
 function App() {
@@ -27,6 +30,9 @@ function App() {
             <Route path="/loginEx" element={<LoginEx />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/board" element={<Board />} />
+            <Route path="/board/write" element={<BoardWrite />} />
+            <Route path="/boardView" element={<BoardView />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>
