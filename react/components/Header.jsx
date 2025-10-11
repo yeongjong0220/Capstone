@@ -27,8 +27,8 @@ const Header = () => {
         <ul
           className="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0"
         >
-          <li><a href="/" className="nav-link px-2 link-secondary">Home</a></li>
-          <li><a href="#" className="nav-link px-2">Features</a></li>
+          <li><a href="/" className="nav-link px-2 link-secondary">홈</a></li>
+          <li><a href="/board" className="nav-link px-2">게시판</a></li>
           <li><a href="#" className="nav-link px-2">Pricing</a></li>
           <li><a href="#" className="nav-link px-2">FAQs</a></li>
           <li><a href="#" className="nav-link px-2">About</a></li>
@@ -56,7 +56,7 @@ const Header = () => {
                 display: 'inline-block',
                 verticalAlign: 'middle'
               }}>
-                {authContext.userId}님
+                {authContext.name}님
               </span>
               <button type="button" className="btn btn-outline-primary me-2" onClick={() => { logout() }}>
                 Log out

@@ -15,7 +15,7 @@ const Login = () => {
 
   //state 
   const [activeTab, setActiveTab] = useState('personal'); // 개인인가 기업인가 상태
-  const [idOrCode, setidOrCode] = useState(''); // 개인: 이메일, 기업: 기업코드?
+  const [emailOrCode, setEmailOrCode] = useState(''); // 개인: 이메일, 기업: 기업코드?
   const [password, setPassword] = useState(''); // 비밀번호
 
   const [rememberMe, setRememberMe] = useState(false); // 이거 써야하나 ? 보류
@@ -36,7 +36,7 @@ const Login = () => {
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     // 탭 변경 시 입력 필드 초기화 (선택 사항)
-    setidOrCode('');
+    setEmailOrCode('');
     setPassword('');
   };
 
@@ -46,7 +46,7 @@ const Login = () => {
 
     const loginData = {
       type: activeTab,
-      id: idOrCode,
+      email: emailOrCode,
       password: password,
     };
     console.log('개인 or 기업 로그인 요청 데이터:', loginData);
@@ -56,7 +56,7 @@ const Login = () => {
         const token = res.data.token
         localStorage.setItem('authToken', token);
         login(token);
-        alert(loginData.id+'님 환영합니다');
+        alert('환영합니다');
       })
       .catch((err) => {
         console.log(err);
@@ -112,8 +112,8 @@ const Login = () => {
               className="form-control"
               id="floatingInput"
               placeholder="아이디"
-              value={idOrCode}
-              onChange={(e) => setidOrCode(e.target.value)}
+              value={emailOrCode}
+              onChange={(e) => setEmailOrCode(e.target.value)}
               required
             />
             <label htmlFor="floatingInput">{activeTab==="personal"?"아이디":"기업코드"}</label>

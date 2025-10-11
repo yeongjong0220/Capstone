@@ -8,6 +8,7 @@ const AuthContext = createContext({
   userId: null, // 유저도 없고 
   gender: null, // 성별도 없고
   region: null, // 암것도 없다
+  name : null,
 
 
   // AuthProvider 컴포넌트로 감싸져 있지 않은 컴포넌트에게 초기 값 , 그니까 에러 방지할라고 넣어 놓은 것
@@ -21,6 +22,7 @@ export const AuthProvider = ({ children }) => {
   const [userId, setUserId] = useState('');
   const [gender, setGender] = useState('');
   const [region, setRegion] = useState('');
+  const [name , setName] = useState('');
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -31,9 +33,10 @@ export const AuthProvider = ({ children }) => {
       }
       else {
         setIsLoggedIn(true);
-        setUserId(decodedToken.id);
+        setUserId(decodedToken.email);
         setGender(decodedToken.gender);
         setRegion(decodedToken.region);
+        setName(decodedToken.name);
       }
     }
   }, [])
@@ -45,9 +48,10 @@ export const AuthProvider = ({ children }) => {
     console.log(decodedToken);
 
     setIsLoggedIn(true);
-    setUserId(decodedToken.id);
+    setUserId(decodedToken.email);
     setGender(decodedToken.gender);
     setRegion(decodedToken.region);
+    setName(decodedToken.name);
   };
 
   // 로그아웃, 토큰 삭제 및 상태 초기화
@@ -62,6 +66,7 @@ export const AuthProvider = ({ children }) => {
     userId,
     gender,
     region,
+    name,
     login,
     logout,
   };
