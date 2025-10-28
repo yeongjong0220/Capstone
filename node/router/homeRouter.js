@@ -12,6 +12,9 @@ const {registerMember, confirmMember} = require("../models/register_query.js");
 const {loginMember} = require("../models/login_query.js")
 const {writeBoard} = require("../models/board_query.js")
 
+///api/chat 라우터 필요 코드
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+
 router.get('/', (req,res)=>{
     res.send("hi");
 })
@@ -58,6 +61,43 @@ router.post('/write',async (req,res)=>{
 router.get('/confirmMember', async (req,res)=>{
     await confirmMember(req.query);
     res.send("인증됨");
+});
+
+router.post('/api/chat', async (req, res) => {
+  try {
+    // 1. React(Chat.jsx)에서 보낸 메시지 받기
+    const userMessage = req.body.message;
+    console.log('React로부터 받은 메시지:', userMessage);
+
+    // 2. (★★ 핵심 ★★) Python RAG API 서버(8001번 포트)에 요청 전송
+    const ragApiUrl = 'http://localhost:8001/ask';
+    
+    const ragResponse = await fetch(ragApiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        message: userMessage // Python 서버의 ChatRequest 형식에 맞게 전송
+      }),
+    });
+
+    if (!ragResponse.ok) {
+      throw new Error(`Python RAG 서버 에러: ${ragResponse.statusText}`);
+    }
+
+    // 3. Python 서버의 응답(ChatResponse) 받기
+    // (Python이 { "answer": "..." }로 반환하기로 약속)
+    const ragData = await ragResponse.json();
+    const botReply = ragData.answer;
+
+    // 4. React(Chat.jsx)가 기대하는 { reply: "..." } 형태로 최종 응답 전송
+    res.status(200).json({ reply: botReply });
+
+  } catch (error) {
+    console.error('챗봇 API 처리 중 오류:', error);
+    res.status(500).json({ reply: '서버에서 오류가 발생했습니다.' });
+  }
 });
 
 module.exports = router;

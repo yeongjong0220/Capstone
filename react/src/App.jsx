@@ -15,6 +15,7 @@ import Home from '../page/Home'
 import Board from '../page/Board.jsx'
 import BoardWrite from '../page/BoardWrite.jsx'
 import BoardView from '../page/BoardView.jsx'
+import Chat from '../page/Chat.jsx' //새로 추가한 Chat 페이지 연결
 
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
             <Route path="/board" element={<Board />} />
             <Route path="/board/write" element={<BoardWrite />} />
             <Route path="/boardView" element={<BoardView />} />
+            <Route path="/chat" element={<Chat />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>
