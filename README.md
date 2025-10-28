@@ -1,7 +1,15 @@
-chat 페이지 만들고 연결을 위해 노드폴더와 리액트 폴더 약간 수정
-파이썬 코드로 gpt API와 파인콘 연결, 이를 위해 노드, 리액트 파일도 수정 완료
+chat 페이지 생성, 파이썬 코드로 gpt API와 파인콘 연결,노드 리액트 파일도 수정
+아래는 실행 방법입니다.
 
-사용시에 env파일로 gpt API와 파인콘 API 등록 필요 (저에게 문의해주세요)
+1. python 폴더에 .env 파일 만들기
+   <code>
+OPENAI_API_KEY="sk-..."
+PINECONE_API_KEY="..." </code>
 
-후에 노드, 리액트 터미널과 더불어 파이썬 터미널도 실행하여 서버 실행 가능
-(필요한 라이브러리등 설치 필요할 수 있음)
+2. 노드, 리액트 터미널 이전과 동일하게 실행
+
+3. 파이썬 터미널 실행
+   <code>
+cd python_rag_server
+pip install fastapi uvicorn langchain langchain-openai langchain-pinecone python-dotenv
+python rag_server.py</code>
