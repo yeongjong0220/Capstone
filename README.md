@@ -10,6 +10,6 @@ PINECONE_API_KEY="..." </code>
 
 3. 파이썬 터미널 실행
    <code>
-cd python_rag_server
+cd python
 pip install fastapi uvicorn langchain langchain-openai langchain-pinecone python-dotenv
 python rag_server.py</code>
