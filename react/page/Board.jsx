@@ -6,11 +6,11 @@ import { useAuth } from '../contexts/AuthContext';
 
 
 const posts = [
-  { id: 121, title: "[학사안내] 2025학년도 제2학기 휴학·복학 신청 안내", writer: "학사지원처", date: "2025.06.13", type: '개인', approved: true },
-  { id: 120, title: "[장학안내] 2차 국가장학금 신청 안내(~9/10)", writer: "장학재단", date: "2025.08.11", type: '기업', approved: false },
-  { id: 119, title: "2025-2026학년도 전남대학교 해외 파견 프로그램 선발 일정", writer: "국제교류팀", date: "2024.11.21", type: '개인', happroved: true },
-  { id: 118, title: "2025학년도 해외 단기 파견 선발 안내", writer: "국제교류팀", date: "2025.09.25", type: '개인', approved: true },
-  { id: 117, title: "자유 게시판 이용 수칙 공지", writer: "운영자", date: "2025.09.01", type: '개인', approved: false },
+  { id: 121, title: "안녕", writer: "최민석", date: "2025.06.13", type: '개인', approved: true },
+  { id: 120, title: "하세요", writer: "최민석", date: "2025.08.11", type: '기업', approved: false },
+  { id: 119, title: "안녕히", writer: "최민석", date: "2024.11.21", type: '개인', happroved: true },
+  { id: 118, title: "계세요", writer: "국제교류팀", date: "2025.09.25", type: '개인', approved: true },
+  { id: 117, title: "bye", writer: "운영자", date: "2025.09.01", type: '개인', approved: false },
 ];
 
 const Board = () => {

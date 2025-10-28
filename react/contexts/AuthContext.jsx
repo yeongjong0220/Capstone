@@ -1,5 +1,6 @@
 import { createContext, useState, useContext, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode'
+import { useNavigate } from 'react-router-dom';
 
 // 1. Context 생성: 초기값으로 상태와 상태를 업데이트할 함수를 정의
 // 이 초기값은 Provider가 없을 때(컴포넌트 밖에 있을 때) 사용, but 실제로는 Provider가 값을 제공(감쌀 예정이니)
@@ -8,7 +9,8 @@ const AuthContext = createContext({
   userId: null, // 유저도 없고 
   gender: null, // 성별도 없고
   region: null, // 암것도 없다
-  name : null,
+  name: null,
+  type: null,
 
 
   // AuthProvider 컴포넌트로 감싸져 있지 않은 컴포넌트에게 초기 값 , 그니까 에러 방지할라고 넣어 놓은 것
@@ -22,7 +24,11 @@ export const AuthProvider = ({ children }) => {
   const [userId, setUserId] = useState('');
   const [gender, setGender] = useState('');
   const [region, setRegion] = useState('');
-  const [name , setName] = useState('');
+  const [name, setName] = useState('');
+  const [type, setType] = useState('');
+
+  const nav = useNavigate();
+
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -37,6 +43,7 @@ export const AuthProvider = ({ children }) => {
         setGender(decodedToken.gender);
         setRegion(decodedToken.region);
         setName(decodedToken.name);
+        setType(decodedToken.type);
       }
     }
   }, [])
@@ -52,10 +59,12 @@ export const AuthProvider = ({ children }) => {
     setGender(decodedToken.gender);
     setRegion(decodedToken.region);
     setName(decodedToken.name);
+    setType(decodedToken.type);
   };
 
   // 로그아웃, 토큰 삭제 및 상태 초기화
   const logout = () => {
+    nav('/');
     setIsLoggedIn(false);
     setUserId(null);
     localStorage.removeItem('authToken');
@@ -67,6 +76,7 @@ export const AuthProvider = ({ children }) => {
     gender,
     region,
     name,
+    type,
     login,
     logout,
   };

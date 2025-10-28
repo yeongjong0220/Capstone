@@ -64,6 +64,9 @@ const Register = () => {
         email: emailOrCode, // 기업은 기업 이메일을 아이디로 사용
         name: name,
         password: password,
+        gender : null,
+        region : null,
+        age : null
       };
     }
 
