@@ -24,8 +24,8 @@ const BoardWrite = () => {
     setPost({
       title : '',
       content : '',
-      writer : authContext.userId,
-      type : ((authContext.gender==='')?'기업':'개인'),
+      writer : authContext.userId || '',
+      type : ((authContext.type==='enterprise')?'기업':'개인') || '',
       file : null,
     })
   },[authContext]);

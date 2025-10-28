@@ -49,7 +49,7 @@ const Login = () => {
       email: emailOrCode,
       password: password,
     };
-    console.log('개인 or 기업 로그인 요청 데이터:', loginData);
+    // console.log('개인 or 기업 로그인 요청 데이터:', loginData);
     axios.post(BACK_LOGIN, loginData)
       .then( (res) => {
         console.log(res);
