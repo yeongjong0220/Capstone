@@ -78,13 +78,13 @@ const Login = () => {
     <div className="d-flex align-items-center py-4 bg-body-tertiary" style={{ minHeight: '100vh' }}>
       <main className="form-signin w-100 m-auto">
         <form onSubmit={handleSubmit}>
-          <img
+          {/* <img
             className="mb-4"
             src="../src/assets/react.svg"
             alt="Bootstrap"
             width="72"
             height="57"
-          />
+          /> */}
           <h1 className="h3 mb-3 fw-normal">Please sign in</h1>
 
           {/* 개인 or 기업 */}

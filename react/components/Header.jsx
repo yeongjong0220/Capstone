@@ -21,7 +21,7 @@ const Header = () => {
             onClick={() => { nav('/') }}
             className="d-inline-flex link-body-emphasis text-decoration-none"
           >
-            <img src={Logo} alt="React Logo" width="40" height="32" />
+            {/* <img src={Logo} alt="React Logo" width="40" height="32" /> */}
           </a>
         </div>
         <ul

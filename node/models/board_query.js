@@ -31,4 +31,20 @@ async function writeBoard(post) {
     }
 }
 
-module.exports = { writeBoard };
+async function getBoard() {
+    const conn = await pool.getConnection();
+    console.log("getBoard 실행");
+
+    try {
+        const [results] = await conn.execute("select postnum,title,writer,date,type,approved,text from post where del = 'N'");
+        return results;
+    }
+    catch (err) {
+        console.error(err);
+    }
+    finally {
+        conn.release();
+    }
+}
+
+module.exports = { writeBoard, getBoard };

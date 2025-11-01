@@ -71,6 +71,7 @@ const BoardWrite = () => {
 
          })
     alert(`제목: ${post.title}, 작성자: ${post.writer}로 저장 요청`);
+    nav('/board');
   };
 
   // 취소 버튼 핸들러
