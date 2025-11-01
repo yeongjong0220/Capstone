@@ -6,7 +6,10 @@ from dotenv import load_dotenv
 
 # LangChain 관련 모듈 임포트
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from langchain_pinecone import PineconeVectorStore
+# 🚨🚨🚨 이 부분이 최신 라이브러리에 맞게 수정되었습니다.
+from langchain_pinecone import Pinecone as PineconeVectorStore
+# from langchain_pinecone import PineconeVectorStore <-- (수정 전)
+
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
 

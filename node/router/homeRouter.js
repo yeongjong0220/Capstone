@@ -10,7 +10,7 @@ const { JWT_SECRET_KEY } = process.env;
 // db 연결
 const {registerMember, confirmMember} = require("../models/register_query.js");
 const {loginMember} = require("../models/login_query.js")
-const {writeBoard} = require("../models/board_query.js")
+const {writeBoard, getBoard} = require("../models/board_query.js")
 
 ///api/chat 라우터 필요 코드
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
@@ -57,11 +57,24 @@ router.post('/write',async (req,res)=>{
     })
 })
 
+router.get('/getPost',async (req,res)=>{
+  try{
+    const posts = await getBoard();
+    
+    res.status(200).json(posts);
+  }
+  catch{
+    res.status(500)
+  }
+})
+
 
 router.get('/confirmMember', async (req,res)=>{
     await confirmMember(req.query);
     res.send("인증됨");
 });
+
+
 
 router.post('/api/chat', async (req, res) => {
   try {

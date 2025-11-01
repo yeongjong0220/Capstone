@@ -1,31 +1,48 @@
-import { React, useEffect } from 'react';
+import { React, useEffect, useState } from 'react';
 import { Button } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import { useAuth } from '../contexts/AuthContext';
+import axios from 'axios'
 
+const GET_POST = import.meta.env.VITE_GET_POST;
 
-const posts = [
-  { id: 121, title: "안녕", writer: "최민석", date: "2025.06.13", type: '개인', approved: true },
-  { id: 120, title: "하세요", writer: "최민석", date: "2025.08.11", type: '기업', approved: false },
-  { id: 119, title: "안녕히", writer: "최민석", date: "2024.11.21", type: '개인', happroved: true },
-  { id: 118, title: "계세요", writer: "국제교류팀", date: "2025.09.25", type: '개인', approved: true },
-  { id: 117, title: "bye", writer: "운영자", date: "2025.09.01", type: '개인', approved: false },
-];
+// const posts = [
+//   { id: 121, title: "안녕", writer: "최민석", date: "2025.06.13", type: '개인', approved: true },
+//   { id: 120, title: "하세요", writer: "최민석", date: "2025.08.11", type: '기업', approved: false },
+//   { id: 119, title: "안녕히", writer: "최민석", date: "2024.11.21", type: '개인', approved: true },
+//   { id: 118, title: "계세요", writer: "국제교류팀", date: "2025.09.25", type: '개인', approved: true },
+//   { id: 117, title: "bye", writer: "운영자", date: "2025.09.01", type: '개인', approved: false },
+// ];
 
 const Board = () => {
-  
+
 
   const nav = useNavigate();
 
   const authContext = useAuth();
 
+  const [posts, setPosts] = useState([]);
   // 현재 활성화된 페이지 번호 (임시로 1 설정)
   const activePage = 1;
 
+
+
+  useEffect(() => {
+    axios.get(GET_POST)
+      .then((res) => {
+        setPosts(res.data)
+        console.log(posts);
+      })
+      .catch((err) => {
+        console.log(err);
+        alert("게시물 가져오기 실패");
+      })
+  }, [])
+
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-white">
-      
+
       {/* 제목 및 글쓰기 버튼 */}
       <div className="flex justify-between items-center mb-6 border-b pb-4">
         <h1 className="text-2xl font-semibold text-gray-800">게시글 목록</h1>
@@ -33,9 +50,9 @@ const Board = () => {
 
       {/* 게시판 테이블 */}
       <div className="overflow-x-auto">
-        <table 
+        <table
           // 테이블 전체 테두리 설정 및 border-collapse 적용 (셀 분리)
-          className="min-w-full border-collapse table-auto border border-gray-300" 
+          className="min-w-full border-collapse table-auto border border-gray-300"
         >
           <thead className="bg-gray-50">
             <tr>
@@ -67,10 +84,10 @@ const Board = () => {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {posts.map((post) => (
-              <tr key={post.id} className="hover:bg-blue-50/50 transition duration-100 cursor-pointer">
+              <tr key={post.postnum} className="hover:bg-blue-50/50 transition duration-100 cursor-pointer">
                 {/* 번호 */}
                 <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 border border-gray-300 text-center">
-                  {post.id}
+                  {post.postnum}
                 </td>
                 {/* 제목 */}
                 <td className="px-6 py-4 text-sm font-medium text-gray-900 max-w-xs truncate border border-gray-300">
@@ -93,43 +110,43 @@ const Board = () => {
                 </td>
                 {/* 첨부 */}
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 flex justify-center border border-gray-300">
-                  {post.approved ? 
-                    <span className='text-center'>O</span> : <span className='text-center'>X</span> }
+                  {(post.approved == 'Y')?
+                    <span className='text-center'>O</span> : <span className='text-center'>X</span>}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      
+
       <br></br>
       {/* 임시 페이지네이션 */}
       <div className="mt-8 flex justify-center space-x-1">
         <button className="px-3 py-1 text-sm rounded-md border text-gray-600 hover:bg-gray-100">이전</button>
         {/* 선택된 페이지 색상 통일 */}
         {[1, 2, 3].map((page) => (
-            <button 
-                key={page}
-                className={`px-3 py-1 text-sm rounded-md border transition duration-150
-                    ${page === activePage 
-                        ? 'font-bold text-white bg-blue-500 border-blue-500 hover:bg-blue-600' // 활성화된 페이지는 파란색
-                        : 'text-gray-600 hover:bg-gray-100 border-gray-300' // 비활성화된 페이지
-                    }`
-                }
-            >
-                {page}
-            </button>
+          <button
+            key={page}
+            className={`px-3 py-1 text-sm rounded-md border transition duration-150
+                    ${page === activePage
+                ? 'font-bold text-white bg-blue-500 border-blue-500 hover:bg-blue-600' // 활성화된 페이지는 파란색
+                : 'text-gray-600 hover:bg-gray-100 border-gray-300' // 비활성화된 페이지
+              }`
+            }
+          >
+            {page}
+          </button>
         ))}
         <button className="px-3 py-1 text-sm rounded-md border text-gray-600 hover:bg-gray-100">다음</button>
         {
-          authContext.isLoggedIn
+          (authContext.isLoggedIn && (authContext.type == "admin" || authContext.type == "enterprise"))
           &&
           (
-          <Button variant="primary" className="absolute right-0" onClick={()=>{
-          nav('/board/write')
-          
-          }}>글쓰기</Button>
-        )
+            <Button variant="primary" className="absolute right-0" onClick={() => {
+              nav('/board/write')
+
+            }}>글쓰기</Button>
+          )
         }
       </div>
     </main>

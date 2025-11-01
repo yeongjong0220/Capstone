@@ -34,7 +34,6 @@ function App() {
             <Route path="/board" element={<Board />} />
             <Route path="/board/write" element={<BoardWrite />} />
             <Route path="/boardView" element={<BoardView />} />
-            <Route path="/chat" element={<Chat />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>
