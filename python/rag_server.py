@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from uvicorn import run
 from dotenv import load_dotenv
 
-# LangChain 관련 모듈 임포트
+# LangChain 관련 모듈 임포트 111
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_pinecone import PineconeVectorStore
 from langchain.chains import RetrievalQA
