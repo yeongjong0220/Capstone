@@ -2,11 +2,9 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { useState } from 'react'
 import {AuthProvider} from '../contexts/AuthContext.jsx' 
 import 'bootstrap/dist/css/bootstrap.min.css'
-// import './App.css'
 
 // 컴포넌트
 import Header from '../components/Header'
-
 import Login from '../page/Login'
 import Register from '../page/Register'
 import Home from '../page/Home'

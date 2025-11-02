@@ -5,8 +5,6 @@ import { jwtDecode } from 'jwt-decode';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios'
 
-import '../style/globals.css'
-
 const GET_POSTS = import.meta.env.VITE_GET_POSTS;
 
 // 게시물 예시

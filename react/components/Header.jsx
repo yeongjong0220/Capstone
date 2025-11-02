@@ -1,6 +1,5 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import '../style/headers.css'
 import { useAuth } from '../contexts/AuthContext';
 import Logo from '../src/assets/logo.png';
 
