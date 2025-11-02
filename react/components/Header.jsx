@@ -2,7 +2,7 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import '../style/headers.css'
 import { useAuth } from '../contexts/AuthContext';
-import Logo from '../src/assets/react.svg';
+import Logo from '../src/assets/logo.png';
 
 const Header = () => {
 
@@ -21,7 +21,7 @@ const Header = () => {
             onClick={() => { nav('/') }}
             className="d-inline-flex link-body-emphasis text-decoration-none"
           >
-            {/* <img src={Logo} alt="React Logo" width="40" height="32" /> */}
+            <img src={Logo} alt="React Logo" width="40" height="32" />
           </a>
         </div>
         <ul

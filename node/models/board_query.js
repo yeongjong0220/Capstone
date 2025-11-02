@@ -33,11 +33,10 @@ async function writeBoard(post) {
 
 async function getBoard() {
     const conn = await pool.getConnection();
-    console.log("getBoard 실행");
 
     try {
-        const [results] = await conn.execute("select postnum,title,writer,date,type,approved,text from post where del = 'N'");
-        return results;
+        const [results] = await conn.execute("select postnum,title,writer,date,type,approved from post where del = 'N'");
+        return { code : 200, posts : results };
     }
     catch (err) {
         console.error(err);
@@ -47,4 +46,35 @@ async function getBoard() {
     }
 }
 
-module.exports = { writeBoard, getBoard };
+async function getPost(postnum) {
+    const conn = await pool.getConnection();
+    
+    try {
+        const [results] = await conn.execute("select postnum,title,writer,date,type,approved,text from post where postnum = ? and del = 'N'", [postnum]);
+        return { code : 200, post : results };
+    }
+    catch (err) {
+        console.error(err);
+    }
+    finally {
+        conn.release();
+    }
+}
+
+async function approveY(postnum) {
+    const conn = await pool.getConnection();
+    
+    try {
+        const [results] = await conn.execute("update post set approved= 'Y' where postnum = ? and del = 'N'", [postnum]);
+        return { code : 200 };
+    }
+    catch (err) {
+        console.error(err);
+    }
+    finally {
+        conn.release();
+    }
+}
+
+
+module.exports = { writeBoard, getBoard, getPost , approveY };

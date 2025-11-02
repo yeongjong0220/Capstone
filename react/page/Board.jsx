@@ -5,113 +5,109 @@ import { jwtDecode } from 'jwt-decode';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios'
 
-const GET_POST = import.meta.env.VITE_GET_POST;
+import '../style/globals.css'
 
-// const posts = [
-//   { id: 121, title: "안녕", writer: "최민석", date: "2025.06.13", type: '개인', approved: true },
-//   { id: 120, title: "하세요", writer: "최민석", date: "2025.08.11", type: '기업', approved: false },
-//   { id: 119, title: "안녕히", writer: "최민석", date: "2024.11.21", type: '개인', approved: true },
-//   { id: 118, title: "계세요", writer: "국제교류팀", date: "2025.09.25", type: '개인', approved: true },
-//   { id: 117, title: "bye", writer: "운영자", date: "2025.09.01", type: '개인', approved: false },
+const GET_POSTS = import.meta.env.VITE_GET_POSTS;
+
+// 게시물 예시
+// const posts = [  
+//   { postnum: 121, title: "안녕", writer: "최민석", date: "2025.06.13", type: '개인', approved: true },
 // ];
 
+
+
 const Board = () => {
-
-
   const nav = useNavigate();
-
   const authContext = useAuth();
-
   const [posts, setPosts] = useState([]);
-  // 현재 활성화된 페이지 번호 (임시로 1 설정)
+
+    // 현재 활성화된 페이지 번호 (임시로 1 설정)
   const activePage = 1;
 
-
-
   useEffect(() => {
-    axios.get(GET_POST)
+    axios.get(GET_POSTS)
       .then((res) => {
         setPosts(res.data)
-        console.log(posts);
       })
       .catch((err) => {
         console.log(err);
         alert("게시물 가져오기 실패");
-      })
+      })   
   }, [])
 
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-white">
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-white min-h-screen">
 
       {/* 제목 및 글쓰기 버튼 */}
-      <div className="flex justify-between items-center mb-6 border-b pb-4">
-        <h1 className="text-2xl font-semibold text-gray-800">게시글 목록</h1>
+      <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-800 mb-1">게시글 목록</h1>
+          <p className="text-sm text-gray-500">전체 게시글 {posts.length}개</p>
+        </div>
+        {(authContext.isLoggedIn && (authContext.type === "admin" || authContext.type === "enterprise")) && (
+          <Button 
+            variant="primary" 
+            onClick={() => nav('/board/write')}
+            className="px-4 py-2"
+          >
+            글쓰기
+          </Button>
+        )}
       </div>
 
       {/* 게시판 테이블 */}
-      <div className="overflow-x-auto">
-        <table
-          // 테이블 전체 테두리 설정 및 border-collapse 적용 (셀 분리)
-          className="min-w-full border-collapse table-auto border border-gray-300"
-        >
+      <div className="overflow-x-auto bg-white border border-gray-300 rounded">
+        <table className="min-w-full border-collapse table-fixed">
           <thead className="bg-gray-50">
             <tr>
-              {/* 번호 (작은 너비) */}
-              <th scope="col" className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16 border border-gray-300">
+              <th scope="col" className="w-[8%] px-4 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider border-r border-b border-gray-300">
                 번호
               </th>
-              {/* 제목 (가장 넓은 공간 사용) */}
-              <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16 border border-gray-300">
+              <th scope="col" className="w-[35%] px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider border-r border-b border-gray-300">
                 제목
               </th>
-              {/* 작성자 (모바일에서 숨김) */}
-              <th scope="col" className="px-25 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32 hidden sm:table-cell border border-gray-300">
+              <th scope="col" className="w-[15%] px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider border-r border-b border-gray-300 hidden sm:table-cell">
                 작성자
               </th>
-              {/* 작성일 */}
-              <th scope="col" className="px-10 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24 border border-gray-300">
+              <th scope="col" className="w-[18%] px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider border-r border-b border-gray-300">
                 작성일
               </th>
-              {/* 유형 */}
-              <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16 hidden md:table-cell border border-gray-300">
+              <th scope="col" className="w-[12%] px-4 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider border-r border-b border-gray-300 hidden md:table-cell">
                 유형
               </th>
-              {/* 첨부파일 (작은 너비) */}
-              <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16 border border-gray-300">
+              <th scope="col" className="w-[12%] px-4 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider border-b border-gray-300">
                 승인 여부
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white">
             {posts.map((post) => (
-              <tr key={post.postnum} className="hover:bg-blue-50/50 transition duration-100 cursor-pointer">
-                {/* 번호 */}
-                <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900 border border-gray-300 text-center">
+              <tr key={post.postnum} className="hover:bg-gray-50 transition-colors duration-150 cursor-pointer">
+                <td className="px-4 py-4 whitespace-nowrap text-center text-sm text-gray-900 border-r border-b border-gray-200">
                   {post.postnum}
                 </td>
-                {/* 제목 */}
-                <td className="px-6 py-4 text-sm font-medium text-gray-900 max-w-xs truncate border border-gray-300">
-                  {/* 제목 링크 색상 통일 */}
-                  <a href={`/board/view/${post.id}`} className="hover:text-blue-600 transition duration-150">
+                <td className="px-6 py-4 text-sm border-r border-b border-gray-200">
+                  <a 
+                    href={`/board/view/${post.postnum}`} 
+                    className="text-blue-600 hover:text-blue-800 hover:underline transition-colors truncate block"
+                  >
                     {post.title}
                   </a>
                 </td>
-                {/* 작성자 */}
-                <td className="px-25 py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell border border-gray-300">
+                <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-700 hidden sm:table-cell border-r border-b border-gray-200">
                   {post.writer}
                 </td>
-                {/* 작성일 */}
-                <td className="px-10 py-4 whitespace-nowrap text-sm text-gray-500 border border-gray-300">
+                <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-600 border-r border-b border-gray-200">
                   {post.date}
                 </td>
-                {/* 유형 */}
-                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell border border-gray-300 text-center">
+                <td className="px-4 py-4 whitespace-nowrap text-center text-sm text-gray-700 hidden md:table-cell border-r border-b border-gray-200">
                   {post.type}
                 </td>
-                {/* 첨부 */}
-                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 flex justify-center border border-gray-300">
-                  {(post.approved == 'Y')?
-                    <span className='text-center'>O</span> : <span className='text-center'>X</span>}
+                <td className="px-4 py-4 whitespace-nowrap text-center text-sm border-b border-gray-200">
+                  {post.approved === 'Y' ? 
+                    <span className="text-green-600 font-semibold">✓</span> : 
+                    <span className="text-red-600 font-semibold">✗</span>
+                  }
                 </td>
               </tr>
             ))}
@@ -119,35 +115,26 @@ const Board = () => {
         </table>
       </div>
 
-      <br></br>
-      {/* 임시 페이지네이션 */}
-      <div className="mt-8 flex justify-center space-x-1">
-        <button className="px-3 py-1 text-sm rounded-md border text-gray-600 hover:bg-gray-100">이전</button>
-        {/* 선택된 페이지 색상 통일 */}
+      {/* 페이지네이션 */}
+      <div className="mt-6 flex justify-center items-center space-x-2">
+        <button className="px-3 py-2 text-sm border border-gray-300 rounded bg-white text-gray-700 hover:bg-gray-50 transition-colors">
+          이전
+        </button>
         {[1, 2, 3].map((page) => (
           <button
             key={page}
-            className={`px-3 py-1 text-sm rounded-md border transition duration-150
-                    ${page === activePage
-                ? 'font-bold text-white bg-blue-500 border-blue-500 hover:bg-blue-600' // 활성화된 페이지는 파란색
-                : 'text-gray-600 hover:bg-gray-100 border-gray-300' // 비활성화된 페이지
-              }`
-            }
+            className={`px-3 py-2 text-sm border rounded transition-colors ${
+              page === activePage
+                ? 'bg-blue-500 border-blue-500 text-white font-semibold'
+                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
           >
             {page}
           </button>
         ))}
-        <button className="px-3 py-1 text-sm rounded-md border text-gray-600 hover:bg-gray-100">다음</button>
-        {
-          (authContext.isLoggedIn && (authContext.type == "admin" || authContext.type == "enterprise"))
-          &&
-          (
-            <Button variant="primary" className="absolute right-0" onClick={() => {
-              nav('/board/write')
-
-            }}>글쓰기</Button>
-          )
-        }
+        <button className="px-3 py-2 text-sm border border-gray-300 rounded bg-white text-gray-700 hover:bg-gray-50 transition-colors">
+          다음
+        </button>
       </div>
     </main>
   );

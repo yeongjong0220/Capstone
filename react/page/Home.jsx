@@ -3,7 +3,7 @@ import Chat from '../page/Chat.jsx'
 
 const Home = () => {
   return (
-    <div>Home
+    <div>
       <Chat></Chat>
     </div>
   )

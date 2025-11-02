@@ -10,15 +10,21 @@ const { JWT_SECRET_KEY } = process.env;
 // db 연결
 const {registerMember, confirmMember} = require("../models/register_query.js");
 const {loginMember} = require("../models/login_query.js")
-const {writeBoard, getBoard} = require("../models/board_query.js")
+const {writeBoard, getBoard, getPost, approveY} = require("../models/board_query.js")
 
 ///api/chat 라우터 필요 코드
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
+
+
+
+// 홈페이지
 router.get('/', (req,res)=>{
     res.send("hi");
 })
 
+
+// 로그인 및 회원가입
 router.post('/login',async (req,res)=>{
     const result = await loginMember(req.body);
     console.log("로그인 라우터");
@@ -40,6 +46,9 @@ router.post('/register',async (req,res)=>{
     }
 })
 
+
+
+// 게시판 관련 라우터
 router.post('/write',async (req,res)=>{
     const token = req.body.token;
     const post = req.body.post;
@@ -57,25 +66,49 @@ router.post('/write',async (req,res)=>{
     })
 })
 
-router.get('/getPost',async (req,res)=>{
+router.get('/getPosts',async (req,res)=>{
   try{
-    const posts = await getBoard();
+    const result = await getBoard();
     
-    res.status(200).json(posts);
+    res.status(result.code).json(result.posts);
   }
   catch{
     res.status(500)
   }
 })
 
+router.get('/getPost',async (req,res)=>{
+  
+  try{
+    const result = await getPost(req.query.postnum);  
+    res.status(result.code).json(result.post);
+  }
+  catch(err){
+    console.log(err);
+    res.status(500)
+  }
+})
 
+router.patch('/setApprove',async (req,res)=>{
+  try{
+    const result = await approveY(req.body.postnum);  
+    res.status(result.code);
+  }
+  catch(err){
+    console.log(err);
+    res.status(500)
+  }
+})
+
+
+// 회원가입 인증을 위한 라우터
 router.get('/confirmMember', async (req,res)=>{
     await confirmMember(req.query);
     res.send("인증됨");
 });
 
 
-
+// 챗봇 라우터
 router.post('/api/chat', async (req, res) => {
   try {
     // 1. React(Chat.jsx)에서 보낸 메시지 받기
