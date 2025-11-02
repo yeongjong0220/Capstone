@@ -40,16 +40,16 @@ const BoardView = () => {
     nav('/board');
   }
 
-
-
-
   return (
     <div>
       <div>
 
         <h2>{post.title}</h2>
-        <p>{post.text}</p>
+        <hr></hr>
 
+        <div>
+        <p>{post.text}</p>
+        </div>
 
         {(authContext.isLoggedIn && authContext.type == "admin" ) && <Button onClick = { setApprove }>승인하기</Button>}
       </div>

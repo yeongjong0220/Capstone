@@ -11,6 +11,7 @@ import Home from '../page/Home'
 import BoardView from '../page/BoardView.jsx'
 import Board from '../page/Board.jsx'
 import BoardWrite from '../page/BoardWrite.jsx'
+import Temp from '../page/Temp.jsx'
 
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
             <Route path="/board" element={<Board />} />
             <Route path="/board/write" element={<BoardWrite />} />
             <Route path="/board/view/:postnum" element={<BoardView />} />
+            <Route path="/temp" element={<Temp/>}></Route>
           </Routes>
         </AuthProvider>
       </BrowserRouter>
