@@ -3,3 +3,6 @@
 
 # 설치 라이브러리 폴더 무시
 node_modules
+
+# VS Code가 만든 Python 가상환경 폴더 무시
+/.venv
