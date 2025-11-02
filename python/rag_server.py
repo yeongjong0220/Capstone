@@ -4,12 +4,11 @@ from pydantic import BaseModel
 from uvicorn import run
 from dotenv import load_dotenv
 
-# LangChain 관련 모듈 임포트 111
+# LangChain 관련 모듈 임포트
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-# 🚨🚨🚨 이 부분이 최신 라이브러리에 맞게 수정되었습니다.
-from langchain_pinecone import Pinecone as PineconeVectorStore
-# from langchain_pinecone import PineconeVectorStore <-- (수정 전)
-
+# 🚨 'langchain_pinecone.Pinecone' -> 'langchain_pinecone.PineconeVectorStore'로
+# 최신 라이브러리 이름에 맞게 수정되었습니다.
+from langchain_pinecone import PineconeVectorStore
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
 
@@ -25,7 +24,6 @@ if not os.getenv("PINECONE_API_KEY"):
 
 # --- 2. (⚠️ 중요) 사용자가 직접 수정할 부분 ---
 # Pinecone에서 미리 생성해 둔 "인덱스 이름"을 입력하세요
-# (데이터가 이미 업로드되어 있어야 합니다)
 PINECONE_INDEX_NAME = "policy-chatbot"
 # ---------------------------------------------
 
@@ -47,9 +45,14 @@ try:
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
 
     # 3. Vector Store (Pinecone 인덱스에 연결)
+    #
+    # ⬇️ ⭐️ [수정됨 1/2] ⭐️
+    # 'text_key'를 업로드 시 사용한 'embedding_text'로 명시
+    #
     vectorstore = PineconeVectorStore.from_existing_index(
         index_name=PINECONE_INDEX_NAME,
-        embedding=embeddings
+        embedding=embeddings,
+        text_key="embedding_text"  # 👈 (중요!) vector_db 2.py와 일치시킴
     )
 
     # 4. Retriever (벡터 저장소에서 관련 문서를 검색)
@@ -59,11 +62,21 @@ try:
     )
 
     # 5. Prompt Template (LLM에게 보낼 지시문 양식)
-    # (이 프롬프트를 수정하여 챗봇의 말투나 역할을 바꿀 수 있습니다)
     prompt_template = """
-    당신은 '지역 정책' 전문 AI 챗봇입니다.
-    반드시 아래에 제공된 [참고 자료]에 근거해서만 답변해야 합니다.
-    [참고 자료]에 없는 내용은 "알 수 없습니다."라고 답변하세요.
+    당신은 사용자에게 '지역 정책'을 쉽고 친절하게 안내하는 전문 AI 챗봇입니다.
+    항상 사용자의 관점에서 생각하며, 명확하고 따뜻한 말투로 답변해 주세요.
+
+    [답변 생성 5원칙]
+    1.  **친절한 말투:** 항상 상냥하고 친절한 어조를 유지하며, 사용자가 이해하기 쉬운 용어를 사용해 주세요. (예: "문의하신 내용은...")
+    2.  **깔끔한 형식:** 답변이 길어질 경우, 사용자가 읽기 편하도록 **줄바꿈**, **글머리 기호(•)**, **번호 매기기**를 적극적으로 사용해 내용을 명확하게 구분해 주세요.
+    3.  **근거 기반 답변:** 답변은 반드시 아래 [참고 자료]에 근거해야 합니다. 자료에 없는 내용을 추측하거나 지어내지 마세요.
+    
+    4.  **(⚠️수정됨) 핵심 정보 강조:**
+        * [참고 자료]에 '신청방법', '문의처', '대상' 등 사용자가 궁금해할 만한 정보가 있다면 답변에 알기 쉽게 포함시켜 주세요.
+        * **[중요] 만약 [참고 자료]의 '신청방법' 등에 'http://' 또는 'https://'로 시작하는 실제 웹 주소(URL)가 명확히 포함되어 있는 경우에만, 해당 링크를 제시해 주세요.**
+        * **자료에 실제 URL이 없다면, 절대 가상의 링크(예: '[바로가기]')를 지어내거나 만들지 마세요.**
+
+    5.  **정중한 거절:** [참고 자료]를 검토해도 사용자의 질문에 대한 적절한 정보를 찾을 수 없다면, "알 수 없습니다."라고 딱딱하게 말하지 말고, "죄송합니다. 문의하신 내용에 대한 정책 정보를 찾지 못했습니다. 더 구체적인 키워드로 질문해 주시겠어요?"와 같이 정중하게 답변하세요.
 
     [참고 자료]
     {context}
@@ -71,20 +84,22 @@ try:
     [질문]
     {question}
 
-    [답변]
+    [친절한 답변]
     """
+    PROMPT = PromptTemplate(
+        template=prompt_template, input_variables=["context", "question"]
+    )
     PROMPT = PromptTemplate(
         template=prompt_template, input_variables=["context", "question"]
     )
 
     # 6. RAG Chain (모든 구성 요소를 하나로 묶기)
-    # 이 체인이 1)질문받기 2)문서검색 3)프롬프트조합 4)LLM답변생성 을 모두 처리
     qa_chain = RetrievalQA.from_chain_type(
         llm=llm,
-        chain_type="stuff", # 'stuff'는 찾은 문서를 모두 context에 넣는 방식
+        chain_type="stuff",
         retriever=retriever,
         chain_type_kwargs={"prompt": PROMPT},
-        return_source_documents=True # (선택) 답변의 근거가 된 문서를 함께 반환
+        return_source_documents=True
     )
 
     print("✅ RAG 챗봇 체인 초기화 완료.")
@@ -105,7 +120,7 @@ class ChatRequest(BaseModel):
 # Node.js에게 보낼 데이터 모델
 class ChatResponse(BaseModel):
     answer: str
-    source: str | None = None # (선택) 답변의 출처
+    source: str | None = None # 답변의 출처
 
 @app.post("/ask", response_model=ChatResponse)
 async def ask_question(request: ChatRequest):
@@ -121,11 +136,13 @@ async def ask_question(request: ChatRequest):
         
         bot_reply = response['result']
         
-        # (선택) 답변의 근거가 된 문서 찾기
+        # ⬇️ ⭐️ [수정됨 2/2] ⭐️
+        # 'source' 대신 업로드 시 사용한 'policy_name'을 출처로 사용
+        #
         source_doc = "출처 정보 없음"
         if response.get('source_documents'):
-            # 첫 번째 근거 문서의 메타데이터(예: 파일명)를 가져옴
-            source_doc = response['source_documents'][0].metadata.get('source', '출처 정보 없음')
+            # 첫 번째 근거 문서의 메타데이터('policy_name')를 가져옴
+            source_doc = response['source_documents'][0].metadata.get('policy_name', '출처 정보 없음')
 
         print(f"LLM이 생성한 답변: {bot_reply}")
         print(f"답변 근거: {source_doc}")
@@ -135,10 +152,34 @@ async def ask_question(request: ChatRequest):
 
     except Exception as e:
         print(f"🚨 RAG 서버 처리 중 오류: {e}")
+        # ⭐️참고: Node.js는 이 메시지를 받게 됩니다.
         return {"answer": "죄송합니다, Python RAG 서버에서 답변 생성 중 오류가 발생했습니다.", "source": None}
 
 
 # --- 5. API 서버 실행 ---
 if __name__ == "__main__":
+    
+    # --- ⬇️ (수정됨) 서버 시작 전, RAG 체인 직접 테스트 (안정화 버전) ⬇️ ---
+    print("--- [RAG 체인 직접 테스트 시작] ---")
+    try:
+        test_query = "광주광역시 청년 정책 알려줘" # 또는 엑셀에 있는 실제 정책 관련 질문
+        test_response = qa_chain.invoke(test_query)
+        print(f"테스트 질문: {test_query}")
+        print(f"테스트 답변: {test_response['result']}")
+        
+        # source_documents가 있는지 확인하고 출력 (list index out of range 방지)
+        if test_response.get('source_documents'):
+            print(f"테스트 근거: {test_response['source_documents'][0].metadata.get('policy_name', 'N/A')}")
+        else:
+            print("테스트 근거: (근거 문서를 찾지 못함)")
+            
+        print("--- [✅ RAG 체인 직접 테스트 성공] ---")
+
+    except Exception as e:
+        print(f"--- [🚨 RAG 체인 직접 테스트 실패] ---")
+        print(f"오류 발생: {e}")
+        print("-----------------------------------")
+    # --- ⬆️ 테스트 코드 종료 ⬆️ ---
+
     print(f"Python RAG API 서버를 8001번 포트에서 시작합니다 (http://localhost:8001)")
     run(app, host="0.0.0.0", port=8001)

@@ -9,7 +9,7 @@ const app = express();
 
 // CORS 설정: 프론트엔드 서버 포트 허용
 const corsOptions = {
-  origin: FRONT_SERVER, // 프론트 개발 서버 포트
+  origin: "http://localhost:5173", // 프론트 개발 서버 포트
   credentials: true, // 쿠키/인증 헤더(credentials)를 포함한 요청 허용
 };
 
@@ -20,8 +20,8 @@ const homeRouter = require("../node/router/homeRouter.js");
 
 app.use('/', homeRouter);
 
-app.listen(process.env.BACK_PORT, ()=>{
-    const url = `http://localhost:${BACK_PORT}`;
+app.listen(8000, ()=>{
+    const url = `http://localhost:8000`;
     console.log("서버 실행 중 "+ url);
 });
 
