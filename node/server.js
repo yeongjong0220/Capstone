@@ -20,8 +20,8 @@ const homeRouter = require("../node/router/homeRouter.js");
 
 app.use('/', homeRouter);
 
-app.listen(8000, ()=>{
-    const url = `http://localhost:8000`;
+app.listen(process.env.BACK_PORT, ()=>{
+    const url = `http://localhost:${BACK_PORT}`;
     console.log("서버 실행 중 "+ url);
 });
 
