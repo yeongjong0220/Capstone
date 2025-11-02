@@ -9,7 +9,7 @@ const app = express();
 
 // CORS 설정: 프론트엔드 서버 포트 허용
 const corsOptions = {
-  origin: "http://localhost:5173", // 프론트 개발 서버 포트
+  origin: FRONT_SERVER, // 프론트 개발 서버 포트
   credentials: true, // 쿠키/인증 헤더(credentials)를 포함한 요청 허용
 };
 
