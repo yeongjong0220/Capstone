@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+// (CSS 파일을 따로 사용하지 않으므로, 이 파일만 수정하면 됩니다)
 
 const Chat = () => {
   // 메시지 목록을 저장할 상태 (초기 메시지 포함)
@@ -25,56 +26,57 @@ const Chat = () => {
   }, [messages]);
 
   // '전송' 버튼 클릭 또는 Enter 키 입력 시 호출될 함수
-const handleSend = async () => {
-  if (input.trim() === '' || isLoading) return; // 빈 메시지나 로딩 중엔 전송 방지
+  const handleSend = async () => {
+    if (input.trim() === '' || isLoading) return; 
 
-  const userMessage = { sender: 'user', text: input };
+    const userMessage = { sender: 'user', text: input };
 
-  // 1. 사용자 메시지를 먼저 화면에 추가
-  setMessages(prevMessages => [...prevMessages, userMessage]);
-  const currentInput = input; // (중요) API로 보낼 메시지를 변수에 저장
-  setInput(''); // 입력창 비우기
-  setIsLoading(true); // 로딩 시작
+    setMessages(prevMessages => [...prevMessages, userMessage]);
+    const currentInput = input; 
+    setInput(''); 
+    setIsLoading(true); 
 
-  // 2. (★★ 핵심 ★★) 백엔드 API에 사용자 메시지 전송
-  try {
-    const response = await fetch('http://localhost:8000/api/chat', { // (가정) 백엔드 API 엔드포인트
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        message: currentInput // 백엔드로 { "message": "사용자 입력값" } 형태의 JSON 전송
-      }), 
-    });
+    try {
+      // (★★ 핵심 ★★) 백엔드 API에 사용자 메시지 전송
+      // 00님의 Node.js 서버 주소로 변경해야 할 수 있습니다. (예: http://localhost:8080/api/chat)
+      // 00님의 Python 서버 주소(예: http://localhost:8001/ask)를 직접 호출하는 것이 아닙니다!
+      const response = await fetch('http://localhost:8000/api/chat', { 
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          message: currentInput 
+        }), 
+      });
 
-    if (!response.ok) { // HTTP 상태 코드가 200-299가 아닐 경우
-      throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok) { 
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // 00님의 Node.js 서버가 Python 서버의 응답을 어떻게 감싸서 보내는지 확인이 필요합니다.
+      // (가정 1) Node.js가 Python의 응답을 그대로 보낸다면: { "answer": "...", "source": "..." }
+      // (가정 2) Node.js가 'reply' 키로 감쌌다면: { "reply": "..." }
+      const data = await response.json(); 
+
+      const botMessage = { 
+        sender: 'bot', 
+        // 00님의 Python 서버 응답 키('answer')에 맞춰 수정
+        text: data.answer || data.reply || "응답 형식을 확인해주세요." 
+      };
+      setMessages(prevMessages => [...prevMessages, botMessage]);
+
+    } catch (error) {
+      console.error("API 호출 중 오류 발생:", error);
+      const errorMessage = { 
+        sender: 'bot', 
+        text: '죄송합니다, 답변을 생성하는 중 오류가 발생했습니다.' 
+      };
+      setMessages(prevMessages => [...prevMessages, errorMessage]);
+    } finally {
+      setIsLoading(false); 
     }
-
-    // (가정) 백엔드가 { "reply": "챗봇의 답변입니다." } 형태의 JSON을 반환한다고 가정
-    const data = await response.json(); 
-
-    // 3. 백엔드로부터 받은 챗봇 응답을 화면에 추가
-    const botMessage = { 
-      sender: 'bot', 
-      text: data.reply // 백엔드에서 온 실제 답변
-    };
-    setMessages(prevMessages => [...prevMessages, botMessage]);
-
-  } catch (error) {
-    console.error("API 호출 중 오류 발생:", error);
-    // 4. 에러 발생 시 사용자에게 알려주기
-    const errorMessage = { 
-      sender: 'bot', 
-      text: '죄송합니다, 답변을 생성하는 중 오류가 발생했습니다.' 
-    };
-    setMessages(prevMessages => [...prevMessages, errorMessage]);
-  } finally {
-    // 5. 성공하든 실패하든 로딩 상태 종료
-    setIsLoading(false); 
-  }
-};
+  };
 
   // Enter 키로 전송하는 함수
   const handleKeyPress = (e) => {
@@ -89,8 +91,14 @@ const handleSend = async () => {
 
       {/* 1. 메시지 표시 영역 */}
       <div 
-        className="border p-3 rounded mb-3" 
-        style={{ height: '65vh', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}
+        // [예쁘게] 'bg-light' 클래스 추가 (채팅창 배경색)
+        className="border p-3 rounded mb-3 bg-light" 
+        style={{ 
+          height: '65vh', 
+          overflowY: 'auto', 
+          display: 'flex', 
+          flexDirection: 'column' 
+        }}
       >
         {messages.map((msg, index) => (
           <div 
@@ -98,8 +106,17 @@ const handleSend = async () => {
             className={`d-flex mb-2 ${msg.sender === 'user' ? 'justify-content-end' : 'justify-content-start'}`}
           >
             <div 
-              className={`alert ${msg.sender === 'user' ? 'alert-primary' : 'alert-secondary'}`}
-              style={{ maxWidth: '75%', wordWrap: 'break-word', margin: 0 }}
+              // [예쁘게] 'rounded-3' (둥근 모서리), 'shadow-sm' (작은 그림자) 클래스 추가
+              className={`alert ${msg.sender === 'user' ? 'alert-primary' : 'alert-secondary'} rounded-3 shadow-sm`}
+              style={{ 
+                // [⭐️ 핵심 ⭐️] Python 서버의 \n (줄바꿈) 문자를 인식하게 하는 CSS
+                whiteSpace: 'pre-line',
+
+                // (기존 스타일)
+                maxWidth: '75%', 
+                wordWrap: 'break-word', 
+                margin: 0 
+              }}
             >
               {msg.text}
             </div>
@@ -109,7 +126,11 @@ const handleSend = async () => {
         {/* 로딩 중일 때 표시 */}
         {isLoading && (
           <div className="d-flex justify-content-start">
-            <div className="alert alert-secondary" style={{ margin: 0 }}>
+            {/* [예쁘게] 로딩창도 다른 메시지와 통일 (rounded-3, shadow-sm) */}
+            <div 
+              className="alert alert-secondary rounded-3 shadow-sm" 
+              style={{ margin: 0 }}
+            >
               <div className="spinner-border spinner-border-sm" role="status">
                 <span className="visually-hidden">Loading...</span>
               </div>
@@ -131,14 +152,14 @@ const handleSend = async () => {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyPress={handleKeyPress}
-          disabled={isLoading} // 로딩 중일 땐 입력 비활성화
+          disabled={isLoading} 
         />
         <button 
           className="btn btn-primary" 
           onClick={handleSend}
-          disabled={isLoading} // 로딩 중일 땐 버튼 비활성화
+          disabled={isLoading} 
         >
-          {isLoading ? ( // 로딩 상태에 따라 버튼 텍스트 변경
+          {isLoading ? ( 
             <>
               <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
               &nbsp; 전송 중...
