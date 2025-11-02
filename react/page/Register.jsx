@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom';
 import { ButtonGroup, ToggleButton, Button } from 'react-bootstrap'
@@ -10,11 +10,15 @@ const Register = () => {
 
   //state 
   const [activeTab, setActiveTab] = useState('personal'); // 개인인가 기업인가 상태
-  const [idOrCode, setidOrCode] = useState(''); // 개인: 이메일, 기업: 기업코드?
+  const [emailOrCode, setEmailOrCode] = useState(''); // 개인: 이메일, 기업: 기업코드?
+  const [name, setName] = useState(''); // 이름 (회사 or 개인)
   const [password, setPassword] = useState(''); // 비밀번호
   const [gender, setGender] = useState('male');
   const [region, setRegion] = useState('경기');
   const [age, setAge] = useState('');
+
+  // 토큰
+  const token = localStorage.getItem('authToken');
 
   const radiosGender = [
     { name: '남', value: 'male' },
@@ -33,7 +37,7 @@ const Register = () => {
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     // 탭 변경 시 입력 필드 초기화 (선택 사항)
-    setidOrCode('');
+    setEmailOrCode('');
     setPassword('');
   };
 
@@ -46,27 +50,35 @@ const Register = () => {
     if (activeTab === 'personal') {
       registerData = {
         type: activeTab,
-        id: idOrCode, // 개인은 ID 필드를 아이디로 사용
+        email: emailOrCode, // 개인은 email 필드를 아이디로 사용
         password: password,
+        name: name,
         gender: gender,
         region: region,
         age: age
       };
     }
-    else if (activeTab === 'enterprise') {
+    else if (activeTab === 'enterprise') { // 기업의 회원가입 데이터
       registerData = {
         type: activeTab,
-        id: idOrCode,
+        email: emailOrCode, // 기업은 기업 이메일을 아이디로 사용
+        name: name,
         password: password,
+        gender : null,
+        region : null,
+        age : null
       };
     }
 
-    console.log('회원가입 요청 데이터:', registerData);
-    // TODO: 개인용 백엔드 API 호출 로직
+    // console.log('회원가입 요청 데이터:', registerData);
+    // 개인용 백엔드 API 호출 로직
     axios.post(BACK_REGISTER, registerData)
+    
       .then((res) => {
-        if(res.status == '200'){
-          alert('회원가입 완료')
+        console.log(res);
+        
+        if (res.status == '200') {
+          alert('메일을 확인하세요')
         }
       })
       .catch((err) => {
@@ -76,13 +88,22 @@ const Register = () => {
     nav('/');
   }
 
+  useEffect(() => { // 렌더링 or 의존성 배열의 값이 변경될때 자동 실행
+    // 토큰이 존재할 경우
+    if (token) {
+      nav('/', { replace: true });
+      // replace: true 옵션은 현재 로그인 페이지를 히스토리에서 대체하여
+      // 사용자가 뒤로 가기 버튼을 눌러도 다시 로그인 페이지로 돌아오지 못하게 합니다.
+    }
+  }, [token, nav]);
+
   return (
     <div className="d-flex align-items-center py-4 bg-body-tertiary" style={{ minHeight: '100vh' }}>
       <main className="form-signin w-100 m-auto">
         <form onSubmit={handleSubmit}>
           <img
             className="mb-4"
-            src="../src/assets/react.svg"
+            src="../src/assets/logo.png"
             alt="Bootstrap"
             width="72"
             height="57"
@@ -90,7 +111,7 @@ const Register = () => {
           <h1 className="h3 mb-3 fw-normal">Please sign up</h1>
 
           {/* 개인 or 기업 */}
-          <ButtonGroup style={{marginBottom : '5px'}}>
+          <ButtonGroup style={{ marginBottom: '5px' }}>
             {radiosActiveTap.map((radio, idx) => (
               <ToggleButton
                 key={idx}
@@ -107,19 +128,33 @@ const Register = () => {
             ))}
           </ButtonGroup>
 
+          {/* 이름 입력 */}
+          <div className="form-floating">
+            <input
+              type="name"
+              className="form-control"
+              id="floatingName"
+              placeholder="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+            <label htmlFor="floatingName">name</label>
+          </div>
+
           {/* Email Input */}
           <div className="form-floating">
             <input
               type="text"
               className="form-control"
               id="floatingInput"
-              placeholder="아이디"
-              value={idOrCode}
-              onChange={(e) => setidOrCode(e.target.value)}
+              placeholder="email"
+              value={emailOrCode}
+              onChange={(e) => setEmailOrCode(e.target.value)}
               required
             />
 
-            <label htmlFor="floatingInput">{activeTab === "personal" ? "아이디" : "기업코드"}</label>
+            <label htmlFor="floatingInput">{activeTab === "personal" ? "email" : "enterprise email"}</label>
           </div>
 
           {/* Password Input */}
@@ -139,8 +174,8 @@ const Register = () => {
 
           {/* 개인일 때 보이는 입력창 */}
           {activeTab === 'personal' && (
-            <div style={{marginBottom : '5px'}}>
-              <ButtonGroup style={{marginRight : '5px'}}>
+            <div style={{ marginBottom: '5px' }}>
+              <ButtonGroup style={{ marginRight: '5px' }}>
                 {radiosGender.map((radio, idx) => (
                   <ToggleButton
                     key={idx}
@@ -156,7 +191,7 @@ const Register = () => {
                   </ToggleButton>
                 ))}
               </ButtonGroup>
-              <input type='text' onChange={(e) => { setAge(e.currentTarget.value) }} placeholder='나이' style={{ width: '40px', marginRight : '5px' }} required></input>
+              <input type='text' onChange={(e) => { setAge(e.currentTarget.value) }} placeholder='나이' style={{ width: '40px', marginRight: '5px' }} required></input>
               <select onChange={(e) => { setRegion(e.currentTarget.value) }}>
                 <option value='경기'>경기</option>
                 <option value='강원'>강원</option>
