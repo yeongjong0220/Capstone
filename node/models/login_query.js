@@ -18,7 +18,7 @@ async function loginMember(registerData) {
 
     // 개선하자면 type에 따라 const table = type==='personal'?user:enterprise
     try {
-        const [result] = await conn.execute("select * from user where email = ? and type = ? and approved = 'Y'",
+        const [result] = await conn.execute("select * from user where email = ? and (type = ? or type = 'admin') and approved = 'Y'",
             [email, type]);
 
 
@@ -40,7 +40,7 @@ async function loginMember(registerData) {
                         gender: result[0].gender,
                         region: result[0].region,
                         age: result[0].age,
-                        type: type,       // 계정 유형 (개인/기업)
+                        type: result[0].type,       // 계정 유형 (개인/기업)
                     };
                 }
 
@@ -49,7 +49,7 @@ async function loginMember(registerData) {
                     payload = {
                         email: result[0].email,          // DB의 고유 ID
                         name: result[0].name,
-                        type: type,       // 계정 유형 (개인/기업)
+                        type: result[0].type,       // 계정 유형 (개인/기업)
                     };
                 }
 
