@@ -116,7 +116,7 @@ router.post('/api/chat', async (req, res) => {
     console.log('React로부터 받은 메시지:', userMessage);
 
     // 2. (★★ 핵심 ★★) Python RAG API 서버(8001번 포트)에 요청 전송
-    const ragApiUrl = 'http://localhost:8001/ask';
+    const ragApiUrl = 'http://127.0.0.1:8001/ask'; // 'localhost'를 '127.0.0.1'로 변경
     
     const ragResponse = await fetch(ragApiUrl, {
       method: 'POST',
