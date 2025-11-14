@@ -6,11 +6,12 @@ from dotenv import load_dotenv
 
 # LangChain 관련 모듈 임포트
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-# 🚨 'langchain_pinecone.Pinecone' -> 'langchain_pinecone.PineconeVectorStore'로
-# 최신 라이브러리 이름에 맞게 수정되었습니다.
 from langchain_pinecone import PineconeVectorStore
-from langchain.chains import RetrievalQA
+
+# ⭐️ 수정됨 1/7: RetrievalQA 대신 ConversationalRetrievalChain 임포트
+from langchain.chains import ConversationalRetrievalChain 
 from langchain.prompts import PromptTemplate
+from typing import List, Dict, Any
 
 # --- 1. .env 파일에서 API 키 로드 ---
 load_dotenv()
@@ -23,7 +24,6 @@ if not os.getenv("PINECONE_API_KEY"):
 
 
 # --- 2. (⚠️ 중요) 사용자가 직접 수정할 부분 ---
-# Pinecone에서 미리 생성해 둔 "인덱스 이름"을 입력하세요
 PINECONE_INDEX_NAME = "policy-chatbot"
 # ---------------------------------------------
 
@@ -38,30 +38,26 @@ try:
     # 1. LLM (언어 모델, 예: GPT-3.5)
     llm = ChatOpenAI(
         model_name="gpt-3.5-turbo",
-        temperature=0.0 # 답변의 일관성을 위해 0.0으로 설정
+        temperature=0.0
     )
 
     # 2. Embedding Model (텍스트를 벡터로 변환)
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
 
     # 3. Vector Store (Pinecone 인덱스에 연결)
-    #
-    # ⬇️ ⭐️ [수정됨 1/2] ⭐️
-    # 'text_key'를 업로드 시 사용한 'embedding_text'로 명시
-    #
     vectorstore = PineconeVectorStore.from_existing_index(
         index_name=PINECONE_INDEX_NAME,
         embedding=embeddings,
-        text_key="embedding_text"  # 👈 (중요!) vector_db 2.py와 일치시킴
+        text_key="embedding_text"
     )
 
     # 4. Retriever (벡터 저장소에서 관련 문서를 검색)
     retriever = vectorstore.as_retriever(
-        search_type="similarity", # 유사도 기반 검색
-        search_kwargs={'k': 3}  # 상위 3개의 관련 문서를 가져옴
+        search_type="similarity",
+        search_kwargs={'k': 3}
     )
 
-    # 5. Prompt Template (LLM에게 보낼 지시문 양식)
+    # 5. Prompt Template (이전과 동일, {chat_history} 변수 포함)
     prompt_template = """
     당신은 사용자에게 '지역 정책'을 쉽고 친절하게 안내하는 전문 AI 챗봇입니다.
     항상 사용자의 관점에서 생각하며, 명확하고 따뜻한 말투로 답변해 주세요.
@@ -78,6 +74,14 @@ try:
 
     5.  **정중한 거절:** [참고 자료]를 검토해도 사용자의 질문에 대한 적절한 정보를 찾을 수 없다면, "알 수 없습니다."라고 딱딱하게 말하지 말고, "죄송합니다. 문의하신 내용에 대한 정책 정보를 찾지 못했습니다. 더 구체적인 키워드로 질문해 주시겠어요?"와 같이 정중하게 답변하세요.
 
+    ---
+    (참고: 아래 [이전 대화 기록]은 답변 생성을 위한 맥락 정보입니다.)
+    
+    [이전 대화 기록]
+    {chat_history}
+    
+    (참고: 아래 [참고 자료]는 현재 질문에 대한 검색 결과입니다.)
+
     [참고 자료]
     {context}
 
@@ -86,19 +90,18 @@ try:
 
     [친절한 답변]
     """
+    
     PROMPT = PromptTemplate(
-        template=prompt_template, input_variables=["context", "question"]
-    )
-    PROMPT = PromptTemplate(
-        template=prompt_template, input_variables=["context", "question"]
+        template=prompt_template, input_variables=["context", "question", "chat_history"]
     )
 
-    # 6. RAG Chain (모든 구성 요소를 하나로 묶기)
-    qa_chain = RetrievalQA.from_chain_type(
+    # ⭐️ 수정됨 2/7: 'RetrievalQA' 대신 'ConversationalRetrievalChain' 사용
+    # 이 체인은 'question'과 'chat_history'를 입력받도록 설계되었습니다.
+    qa_chain = ConversationalRetrievalChain.from_llm(
         llm=llm,
-        chain_type="stuff",
         retriever=retriever,
-        chain_type_kwargs={"prompt": PROMPT},
+        # 'combine_docs_chain_kwargs'를 통해 RAG 프롬프트를 전달합니다.
+        combine_docs_chain_kwargs={"prompt": PROMPT},
         return_source_documents=True
     )
 
@@ -113,35 +116,53 @@ except Exception as e:
 # --- 4. FastAPI 서버 설정 ---
 app = FastAPI()
 
-# Node.js로부터 받을 데이터 모델
+# Node.js로부터 받을 데이터 모델 (이전과 동일)
 class ChatRequest(BaseModel):
     message: str
+    history: List[Dict[str, Any]] = []
 
-# Node.js에게 보낼 데이터 모델
+# Node.js에게 보낼 데이터 모델 (이전과 동일)
 class ChatResponse(BaseModel):
     answer: str
-    source: str | None = None # 답변의 출처
+    source: str | None = None
 
 @app.post("/ask", response_model=ChatResponse)
 async def ask_question(request: ChatRequest):
     """
-    Node.js 백엔드로부터 질문을 받아 RAG 챗봇을 실행하고 답변을 반환합니다.
+    Node.js 백엔드로부터 질문과 대화 기록을 받아 RAG 챗봇을 실행하고 답변을 반환합니다.
     """
     try:
         user_message = request.message
+        chat_history_list = request.history
+        
         print(f"Node.js로부터 받은 질문: {user_message}")
+        print(f"Node.js로부터 받은 대화 기록 수: {len(chat_history_list)}개")
 
-        # [실제 RAG 실행]
-        response = qa_chain.invoke(user_message)
+        # ⭐️ 수정됨 3/7: 'history' 형식을 List[Dict]에서 List[Tuple[str, str]]로 변환
+        # (ConversationalRetrievalChain이 요구하는 형식)
+        # 변환 대상: [{'sender': 'user', 'text': 'Q1'}, {'sender': 'bot', 'text': 'A1'}]
+        # 변환 결과: [('Q1', 'A1')]
+        formatted_history = []
+        user_msg = None
+        for turn in chat_history_list:
+            if turn.get("sender") == "user":
+                user_msg = turn.get("text", "")
+            elif turn.get("sender") == "bot" and user_msg is not None:
+                # 'user' 메시지 다음에 'bot' 메시지가 오면 짝을 이뤄 추가
+                formatted_history.append((user_msg, turn.get("text", "")))
+                user_msg = None # 다음 짝을 위해 초기화
+
+        # ⭐️ 수정됨 4/7: 'invoke'에 'question'과 'chat_history' (튜플 리스트) 전달
+        response = qa_chain.invoke({
+            "question": user_message, 
+            "chat_history": formatted_history
+        })
         
-        bot_reply = response['result']
+        # ⭐️ 수정됨 5/7: 'ConversationalRetrievalChain'의 답변 키는 'result'가 아닌 'answer'
+        bot_reply = response['answer']
         
-        # ⬇️ ⭐️ [수정됨 2/2] ⭐️
-        # 'source' 대신 업로드 시 사용한 'policy_name'을 출처로 사용
-        #
         source_doc = "출처 정보 없음"
         if response.get('source_documents'):
-            # 첫 번째 근거 문서의 메타데이터('policy_name')를 가져옴
             source_doc = response['source_documents'][0].metadata.get('policy_name', '출처 정보 없음')
 
         print(f"LLM이 생성한 답변: {bot_reply}")
@@ -152,22 +173,31 @@ async def ask_question(request: ChatRequest):
 
     except Exception as e:
         print(f"🚨 RAG 서버 처리 중 오류: {e}")
-        # ⭐️참고: Node.js는 이 메시지를 받게 됩니다.
         return {"answer": "죄송합니다, Python RAG 서버에서 답변 생성 중 오류가 발생했습니다.", "source": None}
 
 
 # --- 5. API 서버 실행 ---
 if __name__ == "__main__":
     
-    # --- ⬇️ (수정됨) 서버 시작 전, RAG 체인 직접 테스트 (안정화 버전) ⬇️ ---
+    # --- ⬇️ (수정됨) 서버 시작 전, RAG 체인 직접 테스트 (멀티턴 반영) ⬇️ ---
     print("--- [RAG 체인 직접 테스트 시작] ---")
     try:
-        test_query = "광주광역시 청년 정책 알려줘" # 또는 엑셀에 있는 실제 정책 관련 질문
-        test_response = qa_chain.invoke(test_query)
-        print(f"테스트 질문: {test_query}")
-        print(f"테스트 답변: {test_response['result']}")
+        test_query = "그럼 자격 조건은 뭐야?" 
         
-        # source_documents가 있는지 확인하고 출력 (list index out of range 방지)
+        # ⭐️ 수정됨 6/7: 테스트용 'chat_history'를 튜플 리스트 형식으로 변경
+        test_history_tuples = [
+            ("광주광역시 청년 정책 알려줘", "네, 광주광역시 청년 정책으로는 ... (가상 답변) ... 이 있습니다.")
+        ]
+        
+        test_response = qa_chain.invoke({
+            "question": test_query,
+            "chat_history": test_history_tuples
+        })
+        
+        print(f"테스트 질문: {test_query}")
+        # ⭐️ 수정됨 7/7: 테스트 답변 키도 'answer'로 변경
+        print(f"테스트 답변: {test_response['answer']}")
+        
         if test_response.get('source_documents'):
             print(f"테스트 근거: {test_response['source_documents'][0].metadata.get('policy_name', 'N/A')}")
         else:
