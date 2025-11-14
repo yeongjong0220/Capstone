@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { ButtonGroup, ToggleButton, Button } from 'react-bootstrap'
-import '../style/sign-in.css'
+import styled, { css } from 'styled-components'; // styled-components import
 
+// --- [기능] 기존 로직 (유지) ---
 const BACK_REGISTER = import.meta.env.VITE_BACK_REGISTER;
 
 const Register = () => {
-
-  //state 
+  //state
   const [activeTab, setActiveTab] = useState('personal'); // 개인인가 기업인가 상태
-  const [emailOrCode, setEmailOrCode] = useState(''); // 개인: 이메일, 기업: 기업코드?
+  const [emailOrCode, setEmailOrCode] = useState(''); // 개인: 이메일, 기업: 기업코드
   const [name, setName] = useState(''); // 이름 (회사 or 개인)
   const [password, setPassword] = useState(''); // 비밀번호
+  const [passwordConfirm, setPasswordConfirm] = useState(''); // [병합] 비밀번호 확인 필드 추가
   const [gender, setGender] = useState('male');
   const [region, setRegion] = useState('경기');
   const [age, setAge] = useState('');
@@ -28,7 +28,7 @@ const Register = () => {
   const radiosActiveTap = [
     { name: '개인', value: 'personal' },
     { name: '기업', value: 'enterprise' }
-  ]
+  ];
 
   //navigate
   const nav = useNavigate();
@@ -36,182 +36,305 @@ const Register = () => {
   // 개인, 기업 버튼에 따라 입력 달라지게 하는 핸들러
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    // 탭 변경 시 입력 필드 초기화 (선택 사항)
+    // 탭 변경 시 입력 필드 초기화
     setEmailOrCode('');
+    setName('');
     setPassword('');
+    setPasswordConfirm('');
+    setGender('male');
+    setRegion('경기');
+    setAge('');
   };
 
   // 폼 제출 핸들러
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    // [병합] 비밀번호 확인 로직 추가
+    if (password !== passwordConfirm) {
+      alert('비밀번호가 일치하지 않습니다.');
+      return;
+    }
+
     let registerData = {};
 
     if (activeTab === 'personal') {
       registerData = {
         type: activeTab,
-        email: emailOrCode, // 개인은 email 필드를 아이디로 사용
+        email: emailOrCode,
         password: password,
         name: name,
         gender: gender,
         region: region,
         age: age
       };
-    }
-    else if (activeTab === 'enterprise') { // 기업의 회원가입 데이터
+    } else if (activeTab === 'enterprise') {
       registerData = {
         type: activeTab,
-        email: emailOrCode, // 기업은 기업 이메일을 아이디로 사용
+        email: emailOrCode,
         name: name,
         password: password,
-        gender : null,
-        region : null,
-        age : null
+        gender: null,
+        region: null,
+        age: null
       };
     }
 
-    // console.log('회원가입 요청 데이터:', registerData);
-    // 개인용 백엔드 API 호출 로직
     axios.post(BACK_REGISTER, registerData)
-    
       .then((res) => {
         console.log(res);
-        
         if (res.status == '200') {
-          alert('메일을 확인하세요')
+          alert('메일을 확인하세요');
         }
+        nav('/'); // 성공 시 로그인 페이지로 이동 (혹은 메인으로)
       })
       .catch((err) => {
         console.log(err);
-        alert('회원가입 실패 개발자 도구 참조');
-      })
-    nav('/');
-  }
+        alert('회원가입 실패. 개발자 도구를 참조하세요.');
+      });
+  };
 
-  useEffect(() => { // 렌더링 or 의존성 배열의 값이 변경될때 자동 실행
-    // 토큰이 존재할 경우
+  useEffect(() => {
     if (token) {
       nav('/', { replace: true });
-      // replace: true 옵션은 현재 로그인 페이지를 히스토리에서 대체하여
-      // 사용자가 뒤로 가기 버튼을 눌러도 다시 로그인 페이지로 돌아오지 못하게 합니다.
     }
   }, [token, nav]);
 
+  // --- [디자인] 새로운 return 문 ---
   return (
-    <div className="d-flex align-items-center py-4 bg-body-tertiary" style={{ minHeight: '100vh' }}>
-      <main className="form-signin w-100 m-auto">
-        <form onSubmit={handleSubmit}>
-          <img
-            className="mb-4"
-            src="../src/assets/logo.png"
-            alt="Bootstrap"
-            width="72"
-            height="57"
-          />
-          <h1 className="h3 mb-3 fw-normal">Please sign up</h1>
+    <AuthContainer>
+      <AuthForm as="form" onSubmit={handleSubmit}>
+        <Title>SIGNUP</Title>
+        
+        {/* --- [병합] 개인/기업 탭 --- */}
+        <StyledButtonGroup>
+          {radiosActiveTap.map((radio) => (
+            <StyledToggleButton
+              key={radio.value}
+              type="button"
+              active={activeTab === radio.value}
+              onClick={() => handleTabChange(radio.value)}
+            >
+              {radio.name}
+            </StyledToggleButton>
+          ))}
+        </StyledButtonGroup>
 
-          {/* 개인 or 기업 */}
-          <ButtonGroup style={{ marginBottom: '5px' }}>
-            {radiosActiveTap.map((radio, idx) => (
-              <ToggleButton
-                key={idx}
-                id={`tap-${idx}`}
-                type="radio"
-                variant='outline-primary'
-                name="radioActiveTap"
-                value={radio.value}
-                checked={activeTab === radio.value}
-                onChange={(e) => handleTabChange(e.currentTarget.value)}
-              >
-                {radio.name}
-              </ToggleButton>
-            ))}
-          </ButtonGroup>
+        {/* --- [병합] 이름 (동적 라벨) --- */}
+        <Label>{activeTab === "personal" ? "이름" : "기업명"}</Label>
+        <StyledInput
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
+        
+        {/* --- [병합] 이메일/기업코드 (동적 라벨) --- */}
+        <Label>{activeTab === "personal" ? "이메일 (아이디)" : "기업 이메일 (아이디)"}</Label>
+        <StyledInput
+          type="text" // 이메일 유효성 검사는 나중에 추가
+          value={emailOrCode}
+          onChange={(e) => setEmailOrCode(e.target.value)}
+          required
+        />
 
-          {/* 이름 입력 */}
-          <div className="form-floating">
-            <input
-              type="name"
-              className="form-control"
-              id="floatingName"
-              placeholder="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-            <label htmlFor="floatingName">name</label>
-          </div>
+        {/* --- [병합] 비밀번호 --- */}
+        <Label>비밀번호</Label>
+        <StyledInput
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        
+        {/* --- [병합] 비밀번호 재확인 --- */}
+        <Label>비밀번호 재확인</Label>
+        <StyledInput
+          type="password"
+          value={passwordConfirm}
+          onChange={(e) => setPasswordConfirm(e.target.value)}
+          required
+        />
 
-          {/* Email Input */}
-          <div className="form-floating">
-            <input
-              type="text"
-              className="form-control"
-              id="floatingInput"
-              placeholder="email"
-              value={emailOrCode}
-              onChange={(e) => setEmailOrCode(e.target.value)}
-              required
-            />
+        {/* --- [병합] 개인 회원 전용 입력창 --- */}
+        {activeTab === 'personal' && (
+          <>
+            <InputGroup>
+              <div style={{ flex: 1 }}>
+                <Label>성별</Label>
+                <StyledButtonGroup>
+                  {radiosGender.map((radio) => (
+                    <StyledToggleButton
+                      key={radio.value}
+                      type="button"
+                      active={gender === radio.value}
+                      onClick={() => setGender(radio.value)}
+                    >
+                      {radio.name}
+                    </StyledToggleButton>
+                  ))}
+                </StyledButtonGroup>
+              </div>
+            </InputGroup>
 
-            <label htmlFor="floatingInput">{activeTab === "personal" ? "email" : "enterprise email"}</label>
-          </div>
-
-          {/* Password Input */}
-          <div className="form-floating">
-            <input
-              type="password"
-              className="form-control"
-              id="floatingPassword"
-              placeholder="비밀번호"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-
-            <label htmlFor="floatingPassword">Password</label>
-          </div>
-
-          {/* 개인일 때 보이는 입력창 */}
-          {activeTab === 'personal' && (
-            <div style={{ marginBottom: '5px' }}>
-              <ButtonGroup style={{ marginRight: '5px' }}>
-                {radiosGender.map((radio, idx) => (
-                  <ToggleButton
-                    key={idx}
-                    id={`gender-${idx}`}
-                    type="radio"
-                    variant='outline-primary'
-                    name="radioGender"
-                    value={radio.value}
-                    checked={gender === radio.value}
-                    onChange={(e) => setGender(e.currentTarget.value)}
-                  >
-                    {radio.name}
-                  </ToggleButton>
-                ))}
-              </ButtonGroup>
-              <input type='text' onChange={(e) => { setAge(e.currentTarget.value) }} placeholder='나이' style={{ width: '40px', marginRight: '5px' }} required></input>
-              <select onChange={(e) => { setRegion(e.currentTarget.value) }}>
-                <option value='경기'>경기</option>
-                <option value='강원'>강원</option>
-                <option value='충청'>충청</option>
-                <option value='경상'>경상</option>
-                <option value='전라'>전라</option>
-              </select>
-            </div>
-          )}
-
-          {/* Submit Button */}
-          <button className="btn btn-primary w-100 py-2" type="submit">
-            Sign up
-          </button>
-          <p className="mt-5 mb-3 text-body-secondary">&copy; 2017–2025</p>
-        </form>
-      </main>
-
-    </div>
+            <InputGroup>
+              <div style={{ flex: 1 }}>
+                <Label>나이</Label>
+                <StyledInput
+                  type="number"
+                  placeholder="나이"
+                  value={age}
+                  onChange={(e) => setAge(e.target.value)}
+                  required
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <Label>지역</Label>
+                <StyledSelect 
+                  value={region} 
+                  onChange={(e) => setRegion(e.target.value)}
+                >
+                  <option value='경기'>경기</option>
+                  <option value='강원'>강원</option>
+                  <option value='충청'>충청</option>
+                  <option value='경상'>경상</option>
+                  <option value='전라'>전라</option>
+                </StyledSelect>
+              </div>
+            </InputGroup>
+          </>
+        )}
+        
+        <StyledButton type="submit">회원가입</StyledButton>
+        <FooterText>&copy; 2017–2025</FooterText>
+      </AuthForm>
+    </AuthContainer>
   );
 };
+
+// --- [디자인] 스타일 (styled-components) ---
+const AuthContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 100px 0; /* 폼이 길어질 수 있으므로 위아래 패딩 */
+`;
+
+const AuthForm = styled.div` // 'as' prop으로 <form> 전달
+  width: 400px;
+  padding: 40px;
+  text-align: center;
+`;
+
+const Title = styled.h1`
+  font-size: 3rem;
+  font-weight: bold;
+  margin-bottom: 40px;
+`;
+
+const StyledInput = styled.input`
+  width: 100%;
+  padding: 15px;
+  margin-bottom: 15px;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  background-color: #f7f7f7;
+  border-radius: 8px;
+`;
+
+// [병합] Select 태그 스타일 추가
+const StyledSelect = styled.select`
+  width: 100%;
+  padding: 15px;
+  margin-bottom: 15px;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  background-color: #f7f7f7;
+  border-radius: 8px;
+`;
+
+const StyledButton = styled.button`
+  width: 100%;
+  padding: 15px;
+  font-size: 1rem;
+  font-weight: bold;
+  color: white;
+  background-color: #507ea4;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 10px;
+
+  &:hover {
+    background-color: #335169;
+  }
+`;
+
+const InputGroup = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-bottom: 5px; // InputGroup의 mb를 줄임 (Input에 mb가 있으므로)
+`;
+
+const Label = styled.label`
+  display: block;
+  text-align: left;
+  font-size: 0.9rem;
+  color: #555;
+  margin-bottom: 5px;
+  padding-left: 5px;
+`;
+
+const FooterText = styled.p`
+  margin-top: 40px;
+  font-size: 0.8rem;
+  color: #aaa;
+`;
+
+// [병합] 탭 버튼 (Login.jsx에서 가져옴)
+const StyledButtonGroup = styled.div`
+  margin-bottom: 20px;
+  display: flex;
+  width: 100%;
+`;
+
+const StyledToggleButton = styled.button`
+  flex: 1;
+  padding: 10px 15px;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  background-color: #f7f7f7;
+  color: #555;
+
+  ${props =>
+    props.active &&
+    css`
+      background-color: #507ea4;
+      color: white;
+      border-color: #507ea4;
+    `}
+
+  &:first-child {
+    border-radius: 8px 0 0 8px;
+  }
+  &:last-child {
+    border-radius: 0 8px 8px 0;
+  }
+  
+  &:not(:last-child) {
+    border-right: none;
+  }
+
+  ${props =>
+    !props.active &&
+    css`
+      &:hover {
+        background-color: #eee;
+      }
+    `}
+`;
 
 export default Register;

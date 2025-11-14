@@ -111,9 +111,10 @@ router.get('/confirmMember', async (req,res)=>{
 // 챗봇 라우터
 router.post('/api/chat', async (req, res) => {
   try {
-    // 1. React(Chat.jsx)에서 보낸 메시지 받기
-    const userMessage = req.body.message;
-    console.log('React로부터 받은 메시지:', userMessage);
+    // ⭐️ 수정됨 1/2: React에서 'message'와 'history'를 모두 받음
+    const { message, history } = req.body;
+    console.log('React로부터 받은 메시지:', message);
+    console.log(`React로부터 받은 대화 기록 수: ${history.length}개`);
 
     // 2. (★★ 핵심 ★★) Python RAG API 서버(8001번 포트)에 요청 전송
     const ragApiUrl = 'http://127.0.0.1:8001/ask'; // 'localhost'를 '127.0.0.1'로 변경
@@ -123,8 +124,10 @@ router.post('/api/chat', async (req, res) => {
       headers: {
         'Content-Type': 'application/json',
       },
+      // ⭐️ 수정됨 2/2: Python 서버로 'message'와 'history'를 함께 전송
       body: JSON.stringify({ 
-        message: userMessage // Python 서버의 ChatRequest 형식에 맞게 전송
+        message: message, // 현재 질문
+        history: history  // 이전 대화 기록 (React가 보낸 배열)
       }),
     });
 
@@ -133,7 +136,7 @@ router.post('/api/chat', async (req, res) => {
     }
 
     // 3. Python 서버의 응답(ChatResponse) 받기
-    // (Python이 { "answer": "..." }로 반환하기로 약속)
+    // (Python이 { "answer": "...", "source": "..." }로 반환)
     const ragData = await ragResponse.json();
     const botReply = ragData.answer;
 
