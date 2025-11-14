@@ -2,7 +2,7 @@ const nodemailer = require("nodemailer");
 const dotenv = require("dotenv"); // 숨겨진 환경변수 파일에서 값을 가져와 파싱(구문분석)을 할 수 있게 만드는 모듈
 const path = require("path");
 dotenv.config({ path: path.join(__dirname, '..', 'env', '.env') });
-const { NODEMAILER_USER, NODEMAILER_PASS } = process.env;
+const { NODEMAILER_USER, NODEMAILER_PASS, BACK_SERVER } = process.env;
 
 // 난수 code 생성하는 함수
 const generateRandomNumber = (n) => {
@@ -25,7 +25,7 @@ const transporter = nodemailer.createTransport({
 
 // 회원가입 인증용 메일
 const sendEmail = async (email, type, code) => {
-  const verificationUrl = `http://localhost:8000/confirmMember?type=${type}&token=${code}`;
+  const verificationUrl = `${BACK_SERVER}/confirmMember?type=${type}&token=${code}`;
   const mailOptions = {
     from: NODEMAILER_USER,
     to: email,
