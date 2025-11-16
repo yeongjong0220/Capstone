@@ -1,6 +1,6 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { useState } from 'react'
-import {AuthProvider} from '../contexts/AuthContext.jsx' 
+import { AuthProvider } from '../contexts/AuthContext.jsx'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './App.css'
 
@@ -14,6 +14,7 @@ import Board from '../page/Board.jsx'
 import BoardWrite from '../page/BoardWrite.jsx'
 import About from '../page/About.jsx'
 import Subscription from '../page/Subscription.jsx'
+import JobPostingForm from '../page/JobPostingForm.jsx'
 
 
 function App() {
@@ -29,10 +30,11 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/board" element={<Board />} />
-              <Route path="/board/write" element={<BoardWrite />} />
+              <Route path="/board/write" element={<JobPostingForm />} />
               <Route path="/board/view/:postnum" element={<BoardView />} />
               <Route path="/about" element={<About />} />
-              <Route path="/subscription" element={<Subscription />} />
+              <Route path="/subscription" element={<Subscription />} />
+              <Route path="/temp" element={<BoardWrite />} />
             </Routes>
           </Layout>
         </AuthProvider>

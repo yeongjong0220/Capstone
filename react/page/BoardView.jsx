@@ -47,16 +47,16 @@ const BoardView = () => {
         <PostTitle>{post.title || '로딩 중...'}</PostTitle>
         <PostInfo>
           {/* [병합] 실제 데이터 post.writer (혹은 post.name) 바인딩 */}
-          <span>작성자: {post.writer || '...'}</span>
+          <span>작성자: {post.company_name || '...'}</span>
           {/* [병합] 실제 데이터 post.date 바인딩 */}
-          <span>작성일: {post.date || '...'}</span>
+          <span>작성일: {post.created_at || '...'}</span>
           {/* (조회수 로직은 기능에 없었으므로 임시 제거) */}
         </PostInfo>
       </PostHeader>
       
       {/* [병합] 실제 데이터 post.text 바인딩 */}
       <PostContent>
-        {post.text}
+        {post.content}
       </PostContent>
 
       {/* --- [병합] 버튼 영역 (새 디자인 적용) --- */}

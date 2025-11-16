@@ -60,6 +60,7 @@ router.post('/write',async (req,res)=>{
             console.log('JWT 검증 실패:', err.message);
             return res.status(403).json({ message: '유효하지 않거나 만료된 토큰입니다.' });
         }
+        
         writeBoard(post);
 
         res.status(200);
@@ -68,7 +69,9 @@ router.post('/write',async (req,res)=>{
 
 router.get('/getPosts',async (req,res)=>{
   try{
+    
     const result = await getBoard();
+    console.log(result);
     
     res.status(result.code).json(result.posts);
   }
