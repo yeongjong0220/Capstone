@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext.jsx'; // [추가] AuthContext import
 
 const SidebarContainer = styled.aside`
 width: 240px;
@@ -44,7 +45,6 @@ border-radius: 6px;
     color: white;
 }
 
-  // 활성화된 링크 스타일 (NavLink를 사용하면 더 쉽게 구현 가능)
 &.active {
     background-color: #e0e0e0;
     font-weight: bold;
@@ -71,32 +71,77 @@ padding: 8px 10px;
 const AuthLinks = styled.div`
 display: flex;
 justify-content: space-between;
+align-items: center; // 세로 정렬
 padding: 10px;
 `;
 
-const Sidebar = () => {
-return (
-    <SidebarContainer>
-    <Logo>지역정책 AI 챗봇</Logo>
-    
-    <NavMenu>
-        <NavItem to="/">홈</NavItem>
-        <NavItem to="/board">게시판</NavItem>
-        <NavItem to="/about">about</NavItem>
-        <NavItem to="#">새 채팅</NavItem>
-        <Divider />
-    </NavMenu>
+// [추가] 로그인 시 사용자 이름을 표시할 컴포넌트
+const UserInfo = styled.span`
+  display: block;
+  color: #333; // 로그인 링크보다 진하게
+  font-weight: bold;
+  font-size: 0.9rem;
+  padding: 8px 10px;
+`;
 
-    <FooterMenu>
-        <FooterLink to="/subscription">월정액 구독 ⊕</FooterLink>
-        <AuthLinks>
-        <FooterLink to="/login">log in →</FooterLink>
-        {/* --- [수정됨] signup -> register --- */}
-        <FooterLink to="/register">sign up →</FooterLink>
-        </AuthLinks>
-    </FooterMenu>
+// [추가] 로그아웃 버튼 (FooterLink와 유사하게)
+const LogoutButton = styled.button`
+  display: block;
+  text-decoration: none;
+  color: #777;
+  font-size: 0.9rem;
+  padding: 8px 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit; // 버튼 폰트 통일
+  
+  &:hover {
+    color: #000;
+  }
+`;
+
+
+const Sidebar = () => {
+  // [추가] AuthContext에서 필요한 값 가져오기
+  const { isLoggedIn, name, logout } = useAuth();
+
+  return (
+    <SidebarContainer>
+      <Logo>지역정책 AI 챗봇</Logo>
+      
+      <NavMenu>
+          <NavItem to="/">홈</NavItem>
+          <NavItem to="/board">게시판</NavItem>
+          <NavItem to="/about">about</NavItem>
+          <NavItem to="#">새 채팅</NavItem>
+          <Divider />
+      </NavMenu>
+
+      <FooterMenu>
+          <FooterLink to="/subscription">월정액 구독 ⊕</FooterLink>
+          
+          {/* --- [수정] 로그인 상태에 따라 UI 변경 --- */}
+          <AuthLinks>
+            {isLoggedIn ? (
+              // 1. 로그인 되었을 때
+              <>
+                <UserInfo>{name}님</UserInfo>
+                <LogoutButton onClick={logout}>log out →</LogoutButton>
+              </>
+            ) : (
+              // 2. 로그아웃 되었을 때
+              <>
+                <FooterLink to="/login">log in →</FooterLink>
+                <FooterLink to="/register">sign up →</FooterLink>
+              </>
+            )}
+          </AuthLinks>
+          {/* --- [수정 완료] --- */}
+
+      </FooterMenu>
     </SidebarContainer>
-);
+  );
 };
 
 export default Sidebar;
