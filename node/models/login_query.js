@@ -57,7 +57,7 @@ async function loginMember(registerData) {
                 const token = jwt.sign(
                     payload,          // 토큰에 담을 정보
                     JWT_SECRET,       // 서명에 사용하는 비밀 키
-                    { expiresIn: '10m' } // 토큰 만료 시간, + 만료 시간은 백엔드 서버에서 검증함 ()
+                    { expiresIn: '30m' } // 토큰 만료 시간, + 만료 시간은 백엔드 서버에서 검증함 ()
                 );
                 return { success: true, code: 200, token: token }; // code는 꼭 넣을 것
             }

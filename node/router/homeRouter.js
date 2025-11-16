@@ -71,7 +71,6 @@ router.get('/getPosts',async (req,res)=>{
   try{
     
     const result = await getBoard();
-    console.log(result);
     
     res.status(result.code).json(result.posts);
   }
@@ -94,8 +93,9 @@ router.get('/getPost',async (req,res)=>{
 
 router.patch('/setApprove',async (req,res)=>{
   try{
+    
     const result = await approveY(req.body.postnum);  
-    res.status(result.code);
+    res.status(result.code).json(result.result);
   }
   catch(err){
     console.log(err);

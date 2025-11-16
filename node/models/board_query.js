@@ -68,8 +68,8 @@ async function approveY(postnum) {
     const conn = await pool.getConnection();
 
     try {
-        const [results] = await conn.execute("update post set approved= 'Y' where postnum = ? and del = 'N'", [postnum]);
-        return { code: 200 };
+        const [results] = await conn.execute("update post set approved= 'Y' where post_id = ? and del = 'N'", [postnum]);
+        return { result : results, code: 200 };
     }
     catch (err) {
         console.error(err);

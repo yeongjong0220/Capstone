@@ -53,7 +53,7 @@ const BoardView = () => {
           {/* (조회수 로직은 기능에 없었으므로 임시 제거) */}
         </PostInfo>
       </PostHeader>
-      
+
       {/* [병합] 실제 데이터 post.text 바인딩 */}
       <PostContent>
         {post.content}
@@ -67,7 +67,7 @@ const BoardView = () => {
             승인하기
           </ApproveButton>
         )}
-        
+
         {/* [디자인] '목록으로' 버튼 (Link로 구현) */}
         <ListButton to="/board">
           목록으로
