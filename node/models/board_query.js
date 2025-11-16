@@ -15,13 +15,16 @@ type : '',
 
 async function writeBoard(post) {
     const conn = await pool.getConnection();
-    console.log(post);
-    const {title, content, writer, type} = post;
-    const now = new Date();
+    const { title, summary, content, job_category, employment_type, required_experience,
+        target_audience, region, tags, apply_start_date, apply_end_date, company_name, source_url,
+        apply_method, apply_link, contact_info, attachments, status } = post;
     
+
     try {
-        const [result] = await conn.execute("insert into post(type, title, writer, date, text) value(?,?,?,?,?)",
-                    [type, title, writer, now , content ]);
+        const [result] = await conn.execute("insert into post(title, summary, content, job_category, employment_type, required_experience, target_audience, region, tags, apply_start_date, apply_end_date, company_name, source_url, apply_method, apply_link, contact_info, attachments, status) value(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            [title, summary, content, job_category, employment_type, required_experience,
+                target_audience, region, tags, apply_start_date, apply_end_date, company_name, source_url,
+                apply_method, apply_link, contact_info, attachments, status]);
     }
     catch (err) {
         console.error(err);
@@ -35,8 +38,8 @@ async function getBoard() {
     const conn = await pool.getConnection();
 
     try {
-        const [results] = await conn.execute("select postnum,title,writer,date,type,approved from post where del = 'N'");
-        return { code : 200, posts : results };
+        const [results] = await conn.execute("select post_id,title,company_name,created_at,view_count,approved from post where del = 'N'");
+        return { code: 200, posts: results };
     }
     catch (err) {
         console.error(err);
@@ -48,10 +51,10 @@ async function getBoard() {
 
 async function getPost(postnum) {
     const conn = await pool.getConnection();
-    
+
     try {
-        const [results] = await conn.execute("select postnum,title,writer,date,type,approved,text from post where postnum = ? and del = 'N'", [postnum]);
-        return { code : 200, post : results };
+        const [results] = await conn.execute("select post_id,title,company_name,created_at,view_count,approved,content from post where post_id = ? and del = 'N'", [postnum]);
+        return { code: 200, post: results };
     }
     catch (err) {
         console.error(err);
@@ -63,10 +66,10 @@ async function getPost(postnum) {
 
 async function approveY(postnum) {
     const conn = await pool.getConnection();
-    
+
     try {
         const [results] = await conn.execute("update post set approved= 'Y' where postnum = ? and del = 'N'", [postnum]);
-        return { code : 200 };
+        return { code: 200 };
     }
     catch (err) {
         console.error(err);
@@ -77,4 +80,4 @@ async function approveY(postnum) {
 }
 
 
-module.exports = { writeBoard, getBoard, getPost , approveY };
+module.exports = { writeBoard, getBoard, getPost, approveY };

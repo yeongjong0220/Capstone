@@ -10,6 +10,7 @@ const Board = () => {
   const authContext = useAuth();
   const [posts, setPosts] = useState([]);
   const [activePage, setActivePage] = useState(1);
+  const [isLoaded, setisLoaded] = useState(false);
 
   useEffect(() => {
     axios.get(GET_POSTS)
@@ -34,6 +35,9 @@ const Board = () => {
       });
   }, []); // 마운트 시 1회
 
+
+
+
   return (
     <BoardContainer>
       <HeaderWrapper>
@@ -44,22 +48,22 @@ const Board = () => {
           </WriteButton>
         )}
       </HeaderWrapper>
-      
+
       <PostList>
         {/* posts가 항상 배열이므로 .map 오류가 발생하지 않아야 함 */}
         {posts.map(post => (
-          <PostItem key={post.postnum} to={`/board/view/${post.postnum}`}>
+          <PostItem key={post.post_id} to={`/board/view/${post.post_id}`}>
             <PostTitle>{post.title}</PostTitle>
-            <PostAuthor>{post.writer}</PostAuthor>
+            <PostAuthor>{post.company_name}</PostAuthor>
           </PostItem>
         ))}
-        
+
         {/* [추가] API 응답은 왔으나 데이터가 0개일 때 표시 */}
         {posts.length === 0 && (
           <NoPosts>게시글이 없습니다.</NoPosts>
         )}
       </PostList>
-      
+
       <Pagination>
         <PageButton>이전</PageButton>
         {[1, 2, 3].map((page) => (
