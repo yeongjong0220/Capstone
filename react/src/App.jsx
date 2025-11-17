@@ -15,6 +15,9 @@ import BoardWrite from '../page/BoardWrite.jsx'
 import About from '../page/About.jsx'
 import Subscription from '../page/Subscription.jsx'
 import JobPostingForm from '../page/JobPostingForm.jsx'
+import FindPw from '../page/FindPw.jsx'
+import ResetPw from '../page/ResetPw.jsx'
+import FindId from '../page/FindId.jsx'
 
 
 function App() {
@@ -35,6 +38,9 @@ function App() {
               <Route path="/about" element={<About />} />
               <Route path="/subscription" element={<Subscription />} />
               <Route path="/temp" element={<BoardWrite />} />
+              <Route path="/find-id" element={<FindId />} />
+              <Route path="/find-pw" element={<FindPw />} />
+              <Route path="/reset-pw" element={<ResetPw />} />
             </Routes>
           </Layout>
         </AuthProvider>

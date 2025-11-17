@@ -1,6 +1,6 @@
 const pool = require("../database/db");
 const bcrypt = require('bcrypt');
-const { generateRandomNumber, sendEmail } = require('./sendMail');
+const { generateRandomNumber, sendEmail, sendPwMail } = require('./sendMail');
 
 async function registerMember(registerData) {
     const conn = await pool.getConnection();
@@ -73,8 +73,42 @@ async function confirmMember(query) {
     }
 }
 
+async function setCodeForChPw(email){
+    const conn = await pool.getConnection();
+    const code = generateRandomNumber(10);
+    try{
+        const [result] = await conn.execute("update user set code = ? where email = ? ",
+                    [code, email]);
+        sendPwMail(email,code);
+        return { message: '메일 송신', code: 200 };
+    }
+    catch (err){
+        console.error(err);
+    }
+    finally{
+        conn.release();
+    }
+}
 
-module.exports = { registerMember, confirmMember };
+async function changePw(code, newPw){
+    const conn = await pool.getConnection();
+    console.log(code, newPw);
+    
+    const hashedPw = bcrypt.hashSync(newPw, 10);
+    try{
+        const [result] = await conn.execute("update user set code = null , password= ? where code = ?",[hashedPw, code]);
+        return { message: '비밀번호 변경완료', code: 200 };
+    }
+    catch(err){
+        console.error(err);
+    }
+    finally{
+        conn.release();
+    }
+}
+
+
+module.exports = { registerMember, confirmMember, setCodeForChPw, changePw };
 
 // 직면한 문제
 //  3. 요청 데이터 수정하기 (jwt 토큰 + 인증 유지에 이름 사용하기 등)
