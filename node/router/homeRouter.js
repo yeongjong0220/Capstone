@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken');
 const { JWT_SECRET_KEY } = process.env;
 
 // db 연결
-const {registerMember, confirmMember} = require("../models/register_query.js");
+const {registerMember, confirmMember, setCodeForChPw, changePw} = require("../models/register_query.js");
 const {loginMember} = require("../models/login_query.js")
 const {writeBoard, getBoard, getPost, approveY} = require("../models/board_query.js")
 
@@ -46,7 +46,34 @@ router.post('/register',async (req,res)=>{
     }
 })
 
+router.patch('/findpw', async (req,res)=>{
+    console.log(req.body.email);
+    
+    try{
+        const result = await setCodeForChPw(req.body.email);
+        res.status(result.code).json(result.message);
+    }
+    catch(err){
+        console.log(err);
+        res.status(500);
+    }
+})
 
+router.patch('/resetpw', async (req,res)=>{
+    console.log("비밀번호 진짜 라우터");
+    
+    const code = req.body.code;
+    const newPw = req.body.newPw;
+
+    try{
+        const result = await changePw(code, newPw);
+        res.status(result.code).json(result.message);
+    }
+    catch(err){
+        console.log(err);
+        res.status(500);
+    }
+})
 
 // 게시판 관련 라우터
 router.post('/write',async (req,res)=>{

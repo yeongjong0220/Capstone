@@ -177,11 +177,11 @@ function BoardWrite() {
                 <InputGroup>
                     <FormGroup>
                         <Label>지원 시작일</Label>
-                        <StyledInput type="date" name="apply_start_date" value={formData.apply_start_date} onChange={handleChange} />
+                        <StyledInput type="date" name="apply_start_date" value={formData.apply_start_date} onChange={handleChange} required />
                     </FormGroup>
                     <FormGroup>
                         <Label>지원 마감일</Label>
-                        <StyledInput type="date" name="apply_end_date" value={formData.apply_end_date} onChange={handleChange} />
+                        <StyledInput type="date" name="apply_end_date" value={formData.apply_end_date} onChange={handleChange} required />
                     </FormGroup>
                 </InputGroup>
                 <InputGroup>
@@ -217,8 +217,8 @@ function BoardWrite() {
                 </InputGroup>
             </FormSection>
 
-            {/* 5. 시스템 관리 */}
-            <FormSection>
+            {/* 5. 시스템 관리 , 임시 저장, publish를 결정한다만 혹시 나중에 쓰일 가능성이 있으므로 남겨놓음 */}
+            <FormSection hidden>
                 <SectionTitle>게시 상태</SectionTitle>
                 <FormGroup>
                     <CheckboxRadioGroup>

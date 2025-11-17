@@ -9,8 +9,33 @@ const GET_POSTS = import.meta.env.VITE_GET_POSTS;
 const Board = () => {
   const authContext = useAuth();
   const [posts, setPosts] = useState([]);
-  const [activePage, setActivePage] = useState(1);
   const [isLoaded, setisLoaded] = useState(false);
+
+  // 페이지네이션
+  const [activePage, setActivePage] = useState(1); // 현재 페이지
+  const postPerPage = 5; // 페이지당 포스트
+  const [page, setPage] = useState(1) // 총 페이지 개수 
+  const [fPostInx, setFinx] = useState(0)
+  const [lPostInx, setLinx] = useState(5)
+
+  // 한번에 보여줄 페이지 버튼 배열만들기
+  const getPaginationRange = () => {
+    const maxVisiblePages = 5; // 화면에 보여줄 최대 페이지 버튼 개수
+
+    let startPage = Math.max(1, activePage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(page, startPage + maxVisiblePages - 1);
+
+    // 끝 페이지가 부족할 경우 시작 페이지를 땡기기
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    // 1부터 endPage까지의 배열을 만들고, startPage 미만은 잘라내기
+    const pages = Array.from({ length: endPage }, (_, i) => i + 1).slice(startPage - 1);
+
+    return pages;
+  };
+
 
   useEffect(() => {
     axios.get(GET_POSTS)
@@ -35,8 +60,27 @@ const Board = () => {
       });
   }, []); // 마운트 시 1회
 
+  useEffect(() => {
+    const totalPage = Math.ceil(posts.length / postPerPage) // 총 페이지 개수 구하기
+    setPage(totalPage)
+    setFinx(postPerPage * (activePage - 1)) // 해당 페이지에서 보여줘야할 포스트의 첫 인덱스
+    setLinx(postPerPage * (activePage - 1) + 4) // 해당 페이지에서 보여줘야할 포스트의 마지막 인덱스
 
+  }, [activePage, posts])
 
+    const upPage = () => {
+    if (activePage < page) {
+      setActivePage(activePage + 1);
+      // console.log("현재 페이지" + activePage);
+
+    }
+  }
+  const downPage = () => {
+    if (activePage > 1) {
+      setActivePage(activePage - 1);
+      // console.log("현재 페이지" + activePage);
+    }
+  }
 
   return (
     <BoardContainer>
@@ -48,12 +92,14 @@ const Board = () => {
           </WriteButton>
         )}
       </HeaderWrapper>
-
+      
       <PostList>
         {/* posts가 항상 배열이므로 .map 오류가 발생하지 않아야 함 */}
-        {posts.map(post => (
+
+        {posts.slice(fPostInx, lPostInx + 1).map(post => (
           <PostItem key={post.post_id} to={`/board/view/${post.post_id}`}>
             <PostTitle>{post.title}</PostTitle>
+            <PostAuthor>{post.approved}</PostAuthor>
             <PostAuthor>{post.company_name}</PostAuthor>
           </PostItem>
         ))}
@@ -65,8 +111,8 @@ const Board = () => {
       </PostList>
 
       <Pagination>
-        <PageButton>이전</PageButton>
-        {[1, 2, 3].map((page) => (
+        <PageButton onClick={downPage}>이전</PageButton>
+        {getPaginationRange().map((page) => (
           <PageButton
             key={page}
             $active={page === activePage}
@@ -75,7 +121,7 @@ const Board = () => {
             {page}
           </PageButton>
         ))}
-        <PageButton>다음</PageButton>
+        <PageButton onClick={upPage}>다음</PageButton>
       </Pagination>
     </BoardContainer>
   );
