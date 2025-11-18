@@ -40,12 +40,6 @@ const Board = () => {
   useEffect(() => {
     axios.get(GET_POSTS)
       .then((res) => {
-        // --- [오류 추적을 위한 콘솔 로그 추가] ---
-        console.log("--- API 응답 확인 ---");
-        console.log("Raw res.data:", res.data);
-        console.log("Array.isArray(res.data):", Array.isArray(res.data));
-        // --- [로그 종료] ---
-
         if (Array.isArray(res.data)) {
           setPosts(res.data);
         } else {
@@ -71,14 +65,11 @@ const Board = () => {
     const upPage = () => {
     if (activePage < page) {
       setActivePage(activePage + 1);
-      // console.log("현재 페이지" + activePage);
-
     }
   }
   const downPage = () => {
     if (activePage > 1) {
       setActivePage(activePage - 1);
-      // console.log("현재 페이지" + activePage);
     }
   }
 
@@ -127,12 +118,12 @@ const Board = () => {
   );
 };
 
-// --- 스타일 컴포넌트 (이하 동일) ---
+// --- 스타일 컴포넌트 (수정된 부분) ---
 
 const BoardContainer = styled.div`
   padding: 40px;
   background: #fff;
-  min-height: 500px;
+  /* min-height를 제거하거나 조정하여 PostList에 위임 */
   margin: 20px;
 `;
 
@@ -166,7 +157,13 @@ const WriteButton = styled(Link)`
   }
 `;
 
-const PostList = styled.div``;
+// 🚀 [수정된 부분] PostList에 최소 높이 지정
+const PostList = styled.div`
+  /* 게시글 5개(postPerPage)를 기준으로 최소 높이를 설정합니다. */
+  /* PostItem 높이(51px) * 5개 + 여백을 고려하여 300px로 설정했습니다. */
+  /* 필요에 따라 이 값을 조정하여 게시글 5개가 딱 맞게 보이도록 하세요. */
+  min-height: 300px; 
+`;
 
 // [추가] 게시글 없을 때
 const NoPosts = styled.div`
@@ -184,6 +181,7 @@ const PostItem = styled(Link)`
   border-bottom: 1px solid #f0f0f0;
   text-decoration: none;
   color: #333;
+  /* 높이가 대략 51px 정도 됩니다. */
 
   &:hover {
     background-color: #f9f9f9;
