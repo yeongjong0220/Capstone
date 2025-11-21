@@ -4,6 +4,8 @@ import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import styled from 'styled-components';
 
+import ViewKakaoMap from '../components/Maps/ViewKaKaoMap';
+
 // --- [기능] 기존 로직 (유지) ---
 const GET_POST = import.meta.env.VITE_GET_POST;
 const SET_APPROVE = import.meta.env.VITE_SET_APPROVE;
@@ -58,6 +60,11 @@ const BoardView = () => {
       <PostContent>
         {post.content}
       </PostContent>
+
+
+      <ViewKakaoMap latitude = {post.latitude} longitude = {post.longitude}>
+
+      </ViewKakaoMap>
 
       {/* --- [병합] 버튼 영역 (새 디자인 적용) --- */}
       <ButtonContainer>

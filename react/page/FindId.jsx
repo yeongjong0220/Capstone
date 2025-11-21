@@ -2,8 +2,10 @@ import React from 'react'
 
 const FindId = () => {
   return (
-    <div>FindId</div>
+
+    <div>FindId
+    </div>
   )
 }
 
-export default FindId
+export default FindId;

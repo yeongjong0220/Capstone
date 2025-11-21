@@ -114,6 +114,7 @@ const Sidebar = () => {
           <NavItem to="/">홈</NavItem>
           <NavItem to="/board">게시판</NavItem>
           <NavItem to="/about">about</NavItem>
+          <NavItem to="/map">지역정책 map</NavItem>
           <NavItem to="#">새 채팅</NavItem>
           <Divider />
       </NavMenu>

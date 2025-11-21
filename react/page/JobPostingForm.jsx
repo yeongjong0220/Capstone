@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import styled from 'styled-components'; // [디자인] styled-components import
 
+import KakaoMap from '../components/Maps/MarkingKakaoMap';
+
 // --- [기능] 기존 로직 (유지) ---
 const BACK_WRITE = import.meta.env.VITE_BACK_WRITE;
 
@@ -26,6 +28,8 @@ function BoardWrite() {
     const nav = useNavigate();
     const token = localStorage.getItem('authToken');
 
+
+    const [position, setPosition] = useState({ lat : 0, lng : 0});
     const [formData, setFormData] = useState({
         title: '',
         summary: '',
@@ -43,8 +47,13 @@ function BoardWrite() {
         apply_method: '온라인 지원',
         apply_link: '',
         contact_info: '',
-        status: 'draft'
+        status: 'draft',
     });
+
+    const getPosition = async (pos) =>{
+        setPosition(pos);
+        console.log(pos);
+    }
 
     // [기능] 작성자를 업데이트하기 위한 effect (유지)
     useEffect(() => {
@@ -84,7 +93,9 @@ function BoardWrite() {
         const dataToSend = {
             ...formData,
             target_audience: formData.target_audience.join(','),
-            attachments: "..."
+            attachments: "...",
+            latitude : position.lat, // 위도
+            longitude : position.lng, // 경도
         };
 
         console.log("서버로 전송할 최종 데이터:", dataToSend);
@@ -236,7 +247,8 @@ function BoardWrite() {
                     </CheckboxRadioGroup>
                 </FormGroup>
             </FormSection>
-
+            <SectionTitle>회사 위치?</SectionTitle>
+            <KakaoMap getPosition = {getPosition} position = {position}></KakaoMap>
             <SubmitButton type="submit">공고 등록하기</SubmitButton>
         </FormContainer>
     );
