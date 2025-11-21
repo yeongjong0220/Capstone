@@ -17,14 +17,14 @@ async function writeBoard(post) {
     const conn = await pool.getConnection();
     const { title, summary, content, job_category, employment_type, required_experience,
         target_audience, region, tags, apply_start_date, apply_end_date, company_name, source_url,
-        apply_method, apply_link, contact_info, attachments, status } = post;
+        apply_method, apply_link, contact_info, attachments, status, latitude, longitude } = post;
     
 
     try {
-        const [result] = await conn.execute("insert into post(title, summary, content, job_category, employment_type, required_experience, target_audience, region, tags, apply_start_date, apply_end_date, company_name, source_url, apply_method, apply_link, contact_info, attachments, status) value(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        const [result] = await conn.execute("insert into post(title, summary, content, job_category, employment_type, required_experience, target_audience, region, tags, apply_start_date, apply_end_date, company_name, source_url, apply_method, apply_link, contact_info, attachments, status, latitude, longitude) value(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             [title, summary, content, job_category, employment_type, required_experience,
                 target_audience, region, tags, apply_start_date, apply_end_date, company_name, source_url,
-                apply_method, apply_link, contact_info, attachments, status]);
+                apply_method, apply_link, contact_info, attachments, status, latitude, longitude]);
     }
     catch (err) {
         console.error(err);
@@ -38,7 +38,7 @@ async function getBoard() {
     const conn = await pool.getConnection();
 
     try {
-        const [results] = await conn.execute("select post_id,title,company_name,created_at,view_count,approved from post where del = 'N'");
+        const [results] = await conn.execute("select post_id,title,company_name,created_at,view_count,approved,latitude,longitude from post where del = 'N'");
         return { code: 200, posts: results };
     }
     catch (err) {
@@ -53,7 +53,7 @@ async function getPost(postnum) {
     const conn = await pool.getConnection();
 
     try {
-        const [results] = await conn.execute("select post_id,title,company_name,created_at,view_count,approved,content from post where post_id = ? and del = 'N'", [postnum]);
+        const [results] = await conn.execute("select post_id,title,company_name,created_at,view_count,approved,content, latitude, longitude from post where post_id = ? and del = 'N'", [postnum]);
         return { code: 200, post: results };
     }
     catch (err) {
