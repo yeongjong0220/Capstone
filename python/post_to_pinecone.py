@@ -23,12 +23,17 @@ PINECONE_INDEX_NAME = "job-postings-index"
 
 # DB 설정
 db_config = {
-    'host': 'capstone-choi.c21iu2qqwmva.us-east-1.rds.amazonaws.com',
+    #'host': 'capstone-choi.c21iu2qqwmva.us-east-1.rds.amazonaws.com',
+    'host': 'localhost',
     'user': 'root',
     'password': os.getenv("DB_PASSWORD"),
     'database': os.getenv("DB_NAME") 
 }
-TABLE_NAME = "job_postings"
+# 👇👇 이 코드를 추가해서 실행해보세요! 👇👇
+print(f"--------------------------------------------------")
+print(f"👀 현재 파이썬이 접속하려는 주소: {db_config['host']}")
+print(f"--------------------------------------------------")
+TABLE_NAME = "post"
 BATCH_SIZE = 100 
 CHECK_INTERVAL = 60 # 60초(1분)마다 확인
 
