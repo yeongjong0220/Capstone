@@ -21,18 +21,19 @@ EMBEDDING_DIMENSION = 1536
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 PINECONE_INDEX_NAME = "job-postings-index"
 
-# DB 설정
+# DB 설정 (AWS RDS)
 db_config = {
-    #'host': 'capstone-choi.c21iu2qqwmva.us-east-1.rds.amazonaws.com',
-    'host': 'localhost',
-    'user': 'root',
+    'host': os.getenv("DB_HOST"),
+    'port': int(os.getenv("DB_PORT", 3306)),
+    'user': os.getenv("DB_USER"),
     'password': os.getenv("DB_PASSWORD"),
     'database': os.getenv("DB_NAME") 
 }
-# 👇👇 이 코드를 추가해서 실행해보세요! 👇👇
+
 print(f"--------------------------------------------------")
 print(f"👀 현재 파이썬이 접속하려는 주소: {db_config['host']}")
 print(f"--------------------------------------------------")
+
 TABLE_NAME = "post"
 BATCH_SIZE = 100 
 CHECK_INTERVAL = 60 # 60초(1분)마다 확인
@@ -63,12 +64,8 @@ def process_new_postings():
     conn = None
     try:
         conn = mysql.connector.connect(**db_config)
-        # dictionary=True: DB 결과를 딕셔너리 {key: value} 형태로 가져옴
         cursor = conn.cursor(dictionary=True)
 
-        # [핵심 쿼리 수정]
-        # status가 'published' 인 것만 가져옵니다. (draft 제외)
-        # approved='Y', del='N', is_embedded='N' 조건도 포함
         query = f"""
             SELECT * FROM {TABLE_NAME} 
             WHERE status = 'published' 
@@ -100,26 +97,30 @@ def process_new_postings():
                 )
                 vector = response.data[0].embedding
 
-                # (C) 메타데이터 준비 (리스트 변환 포함)
+                # (C) 메타데이터 준비
                 tags_list = [t.strip() for t in row['tags'].split(',')] if row.get('tags') else []
                 audience_list = [a.strip() for a in row['target_audience'].split(',')] if row.get('target_audience') else []
 
                 metadata = {
-                    "title": row.get('title'),
-                    "status": row.get('status'), # 메타데이터에도 status 포함
-                    "summary": row.get('summary'),
-                    "job_category": row.get('job_category'),
-                    "employment_type": row.get('employment_type'),
-                    "required_experience": row.get('required_experience'),
-                    "region": row.get('region'),
-                    "company_name": row.get('company_name'),
-                    "source_url": row.get('source_url'),
-                    "apply_method": row.get('apply_method'),
-                    "apply_link": row.get('apply_link'),
+                    "title": row.get('title') or "",
+                    "status": row.get('status') or "",
+                    "summary": row.get('summary') or "",
+                    
+                    # 🌟 [핵심 수정] 챗봇이 답변할 때 읽을 '본문'을 저장합니다.
+                    "context_text": text_to_embed, 
+                    
+                    "job_category": row.get('job_category') or "",
+                    "employment_type": row.get('employment_type') or "",
+                    "required_experience": row.get('required_experience') or "",
+                    "region": row.get('region') or "",
+                    "company_name": row.get('company_name') or "",
+                    "source_url": row.get('source_url') or "",      
+                    "apply_method": row.get('apply_method') or "",  
+                    "apply_link": row.get('apply_link') or "",      
                     "tags": tags_list,
                     "target_audience": audience_list,
-                    "apply_start_date": row['apply_start_date'].isoformat() if row.get('apply_start_date') else None,
-                    "apply_end_date": row['apply_end_date'].isoformat() if row.get('apply_end_date') else None,
+                    "apply_start_date": row['apply_start_date'].isoformat() if row.get('apply_start_date') else "",
+                    "apply_end_date": row['apply_end_date'].isoformat() if row.get('apply_end_date') else "",
                 }
 
                 vectors_to_upsert.append({
@@ -138,12 +139,11 @@ def process_new_postings():
             index.upsert(vectors=vectors_to_upsert)
             print(f"✅ Pinecone에 {len(vectors_to_upsert)}개 데이터 업로드 완료.")
 
-            # DB에 '처리완료(Y)' 표시 -> 다음에 다시 안 가져오게 함
             if processed_ids:
                 format_strings = ','.join(['%s'] * len(processed_ids))
                 update_query = f"UPDATE {TABLE_NAME} SET is_embedded = 'Y' WHERE post_id IN ({format_strings})"
                 
-                cursor = conn.cursor() # 딕셔너리 커서 말고 일반 커서 사용
+                cursor = conn.cursor()
                 cursor.execute(update_query, tuple(processed_ids))
                 conn.commit()
                 print(f"✅ DB 업데이트 완료: {len(processed_ids)}개 공고 'is_embedded' -> 'Y'")
@@ -154,15 +154,11 @@ def process_new_postings():
         if conn and conn.is_connected():
             conn.close()
 
-# -----------------------------------------------
-# 3. 메인 실행 (무한 루프)
-# -----------------------------------------------
 if __name__ == "__main__":
-    print("🚀 실시간 공고 감시 시스템(Status 필터 적용) 시작 (Ctrl+C로 종료)")
-    
+    print("🚀 실시간 공고 감시 시스템(AWS RDS 연결) 시작 (Ctrl+C로 종료)")
     try:
         while True:
             process_new_postings()
-            time.sleep(CHECK_INTERVAL) # 60초마다 반복
+            time.sleep(CHECK_INTERVAL)
     except KeyboardInterrupt:
         print("\n🛑 시스템을 종료합니다.")
