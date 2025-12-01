@@ -18,6 +18,7 @@ import JobPostingForm from '../page/JobPostingForm.jsx'
 import FindPw from '../page/FindPw.jsx'
 import ResetPw from '../page/ResetPw.jsx'
 import FindId from '../page/FindId.jsx'
+import ViewAllKMap from '../components/Maps/ViewAllKMap.jsx'
 
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
               <Route path="/find-id" element={<FindId />} />
               <Route path="/find-pw" element={<FindPw />} />
               <Route path="/reset-pw" element={<ResetPw />} />
+              <Route path="/map" element={<ViewAllKMap />} />
             </Routes>
           </Layout>
         </AuthProvider>
