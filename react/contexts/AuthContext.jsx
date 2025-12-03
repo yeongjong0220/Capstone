@@ -11,7 +11,7 @@ const AuthContext = createContext({
   region: null, // 암것도 없다
   name: null,
   type: null,
-
+  age : null, 
 
   // AuthProvider 컴포넌트로 감싸져 있지 않은 컴포넌트에게 초기 값 , 그니까 에러 방지할라고 넣어 놓은 것
   login: () => { },
@@ -26,6 +26,7 @@ export const AuthProvider = ({ children }) => {
   const [region, setRegion] = useState('');
   const [name, setName] = useState('');
   const [type, setType] = useState('');
+  const [age, setAge] = useState('');
 
   const nav = useNavigate();
 
@@ -44,6 +45,7 @@ export const AuthProvider = ({ children }) => {
         setRegion(decodedToken.region);
         setName(decodedToken.name);
         setType(decodedToken.type);
+        setAge(decodedToken.age);
       }
     }
   }, [])
@@ -60,6 +62,7 @@ export const AuthProvider = ({ children }) => {
     setRegion(decodedToken.region);
     setName(decodedToken.name);
     setType(decodedToken.type);
+    setAge(decodedToken.age);
   };
 
   // 로그아웃, 토큰 삭제 및 상태 초기화
@@ -77,6 +80,7 @@ export const AuthProvider = ({ children }) => {
     region,
     name,
     type,
+    age,
     login,
     logout,
   };
