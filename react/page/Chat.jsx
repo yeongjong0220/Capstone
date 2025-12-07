@@ -105,7 +105,7 @@ const Chat = () => {
   const [messages, setMessages] = useState([
     { 
       sender: 'bot', 
-      text: '안녕하세요, Jobs입니다.\n찾으시는 정책이나 혜택이 있다면 무엇이든 물어봐 주세요.' 
+      text: '안녕하세요, Jobs입니다.\n정책이나 일자리가 궁금하시다면 무엇이든 물어봐 주세요.' 
     }
   ]);
   
