@@ -38,7 +38,7 @@ async function getBoard() {
     const conn = await pool.getConnection();
 
     try {
-        const [results] = await conn.execute("select post_id,title,company_name,created_at,view_count,approved,latitude,longitude from post where del = 'N'");
+        const [results] = await conn.execute("select post_id,title,company_name,created_at,view_count,apply_start_date,apply_end_date,approved,latitude,longitude from post where del = 'N'");
         return { code: 200, posts: results };
     }
     catch (err) {
