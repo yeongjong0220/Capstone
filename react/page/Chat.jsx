@@ -3,17 +3,38 @@ import styled, { keyframes } from 'styled-components';
 import { AuthContext } from '../contexts/AuthContext'; 
 
 // --- [디자인] styled-components 정의 ---
+
 const ChatContainer = styled.div`
   display: flex;
   flex-direction: column;
   height: calc(100vh - 120px);
   padding: 20px;
+  position: relative; /* 배경 텍스트 배치를 위한 기준점 */
+  overflow: hidden; /* 배경 텍스트가 넘치더라도 스크롤 생기지 않게 함 */
+`;
+
+// 새로 추가된 배경 텍스트 컴포넌트
+const ChatBackgroundText = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* 정확히 중앙 정렬 */
+  font-size: 10vw; /* 창 너비의 10% 크기 (반응형) */
+  font-weight: 900; /* 아주 두꺼운 글씨 */
+  color: #f0f0f0; /* 아주 연한 회색 */
+  white-space: nowrap; /* 줄바꿈 방지 */
+  z-index: 0; /* 채팅 내용보다 뒤로 */
+  pointer-events: none; /* 클릭 통과 (마우스 이벤트 방해 안 함) */
+  user-select: none; /* 드래그 선택 방지 */
+  font-family: sans-serif; /* 깔끔한 산세리프 폰트 권장 */
 `;
 
 const ChatHistory = styled.div`
   flex: 1;
   overflow-y: auto;
   padding: 0 10px;
+  position: relative; /* z-index 적용을 위해 필수 */
+  z-index: 1; /* 배경 텍스트보다 위에 오도록 설정 */
 `;
 
 const ChatBubble = styled.div`
@@ -25,7 +46,7 @@ const ChatBubble = styled.div`
   border-radius: 20px;
   line-height: 1.5;
   word-wrap: break-word;
-  white-space: pre-wrap; /* 줄바꿈(\n) 처리를 위해 필수 */
+  white-space: pre-wrap;
 
   ${props => props.$sender === 'user' ? `
     background-color: #507ea4;
@@ -65,6 +86,8 @@ const InputArea = styled.form`
   padding: 20px 10px;
   border-top: 1px solid #ddd;
   background-color: #fdfdfd;
+  position: relative; /* z-index 적용을 위해 필수 */
+  z-index: 2; /* 배경 및 채팅 내역보다 위에 오도록 설정 */
 `;
 
 const TextInput = styled.input`
@@ -101,7 +124,6 @@ const SendButton = styled.button`
 
 // --- [기능] Chat 컴포넌트 ---
 const Chat = () => {
-  // 🌟 [수정] 첫 인사말 변경
   const [messages, setMessages] = useState([
     { 
       sender: 'bot', 
@@ -135,7 +157,6 @@ const Chat = () => {
     setInput('');
     setIsLoading(true);
 
-    // userProfile 객체 생성
     const userProfile = isLoggedIn ? {
         age: age || "알 수 없음",
         region: region || "알 수 없음",
@@ -183,6 +204,9 @@ const Chat = () => {
 
   return (
     <ChatContainer>
+      {/* 배경 텍스트 추가 (ChatContainer 내부에 위치) */}
+      <ChatBackgroundText>Jobs knows.</ChatBackgroundText>
+
       <ChatHistory>
         {messages.map((msg, index) => (
           <ChatBubble key={index} $sender={msg.sender}>
