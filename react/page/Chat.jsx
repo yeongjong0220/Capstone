@@ -221,7 +221,7 @@ const Chat = () => {
           </ChatBubble>
         )}
         <div ref={messagesEndRef} />
-      </ChatHistory>
+      </ChatHistory> 
 
       <InputArea onSubmit={handleSend}>
         <TextInput
