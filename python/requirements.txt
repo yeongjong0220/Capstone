@@ -24,12 +24,14 @@ jsonpointer==3.0.0
 langchain==0.3.27
 langchain-community==0.3.31
 langchain-core==0.3.79
+langchain-google-genai  # 👈 [추가됨] Gemini 연동 필수
 langchain-openai==0.3.35
 langchain-pinecone==0.2.12
 langchain-text-splitters==0.3.11
 langsmith==0.4.39
 marshmallow==3.26.1
 multidict==6.7.0
+mysql-connector-python  # 👈 [추가됨] DB 연결 필수
 mypy_extensions==1.1.0
 numpy==2.3.4
 openai==2.6.1

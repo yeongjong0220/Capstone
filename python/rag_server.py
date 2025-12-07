@@ -3,12 +3,19 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from uvicorn import run
 from dotenv import load_dotenv
+from operator import itemgetter
 
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+# 1. 임베딩은 OpenAI 유지
+from langchain_openai import OpenAIEmbeddings 
+
+# 2. LLM은 Google Gemini 사용
+from langchain_google_genai import ChatGoogleGenerativeAI 
+
 from langchain_pinecone import PineconeVectorStore
-from langchain.chains import ConversationalRetrievalChain 
-from langchain.prompts import PromptTemplate
-from langchain.retrievers import EnsembleRetriever # ⭐️ 핵심 모듈 추가
+from langchain_core.prompts import PromptTemplate
+from langchain_core.runnables import RunnablePassthrough, RunnableLambda
+from langchain_core.output_parsers import StrOutputParser
+from langchain.retrievers import EnsembleRetriever 
 from typing import List, Dict, Any
 
 # --- 1. .env 파일에서 API 키 로드 ---
@@ -18,11 +25,13 @@ if not os.getenv("OPENAI_API_KEY"):
     raise ValueError("OPENAI_API_KEY가 .env 파일에 설정되지 않았습니다.")
 if not os.getenv("PINECONE_API_KEY"):
     raise ValueError("PINECONE_API_KEY가 .env 파일에 설정되지 않았습니다.")
+if not os.getenv("GOOGLE_API_KEY"):
+    raise ValueError("GOOGLE_API_KEY가 .env 파일에 설정되지 않았습니다.")
 
 
 # --- 2. ✌️ 두 개의 인덱스 설정 ---
 INDEX_NAME_POLICY = "policy-chatbot"      # 기존 정책 데이터
-INDEX_NAME_JOB = "job-postings-index"     # 신규 채용 공고 데이터
+INDEX_NAME_JOB = "job-postings-index"     # 신규 채용 공고
 # ---------------------------------------------
 
 
@@ -30,109 +39,156 @@ INDEX_NAME_JOB = "job-postings-index"     # 신규 채용 공고 데이터
 try:
     print("RAG 챗봇 구성 요소를 초기화합니다...")
 
-    llm = ChatOpenAI(
-        model_name="gpt-3.5-turbo",
+    # 🌟 [모델] Gemini 2.0 Flash Exp
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-2.0-flash-exp", 
         temperature=0.0
     )
 
+    # ⚠️ [임베딩] OpenAI
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
 
     # ---------------------------------------------------------
-    # 🔍 1번 검색기: 정책 데이터 (policy-chatbot)
+    # 🔍 1번 검색기: 정책 데이터
     # ---------------------------------------------------------
     print(f"📡 인덱스 1 연결 중: {INDEX_NAME_POLICY}")
     vectorstore_policy = PineconeVectorStore.from_existing_index(
         index_name=INDEX_NAME_POLICY,
         embedding=embeddings,
-        text_key="embedding_text" # ⚠️ 기존 정책 데이터의 키 (변경 금지)
+        text_key="embedding_text"
     )
     retriever_policy = vectorstore_policy.as_retriever(
         search_type="similarity",
-        search_kwargs={'k': 2} # 정책에서 2개 검색
+        search_kwargs={'k': 3} 
     )
 
     # ---------------------------------------------------------
-    # 🔍 2번 검색기: 채용 공고 (job-postings-index)
+    # 🔍 2번 검색기: 채용 공고
     # ---------------------------------------------------------
     print(f"📡 인덱스 2 연결 중: {INDEX_NAME_JOB}")
     vectorstore_job = PineconeVectorStore.from_existing_index(
         index_name=INDEX_NAME_JOB,
         embedding=embeddings,
-        text_key="context_text" # ⚠️ 신규 채용 데이터의 키 (변경 금지)
+        text_key="context_text"
     )
     retriever_job = vectorstore_job.as_retriever(
         search_type="similarity",
-        search_kwargs={'k': 2} # 채용 공고에서 2개 검색
+        search_kwargs={'k': 3} 
     )
 
     # ---------------------------------------------------------
-    # 🤝 앙상블 검색기 (두 결과를 합침)
+    # 🤝 앙상블 검색기 (통합)
     # ---------------------------------------------------------
     print("🔗 두 검색기를 하나로 통합(Ensemble)합니다...")
     ensemble_retriever = EnsembleRetriever(
         retrievers=[retriever_policy, retriever_job],
-        weights=[0.5, 0.5] # 중요도를 5:5로 설정
+        weights=[0.5, 0.5] 
     )
 
+    # ---------------------------------------------------------
+    # 🌟 [핵심 기능 추가] 메타데이터 포맷팅 함수
+    # Pinecone의 'metadata' 필드를 끄집어내어 텍스트로 변환합니다.
+    # ---------------------------------------------------------
+    def format_docs_with_metadata(docs):
+        formatted_results = []
+        for i, doc in enumerate(docs):
+            meta = doc.metadata
+            content = doc.page_content
+            
+            # 메타데이터에서 안전하게 값 가져오기 (없으면 '정보 없음' 등)
+            title = meta.get('title') or meta.get('policy_name') or "제목 없음"
+            
+            # 채용 공고 관련 필드
+            end_date = meta.get('apply_end_date', '')
+            method = meta.get('apply_method', '')
+            link = meta.get('apply_link', '')
+            category = meta.get('job_category', '')
+            
+            # 정책 관련 필드 (필요시 추가)
+            target = meta.get('target_audience', '')
 
-    # 프롬프트 템플릿 (7원칙 유지)
+            # LLM에게 보여줄 텍스트 블록 조립
+            doc_str = (
+                f"--- [문서 {i+1}: {title}] ---\n"
+                f"내용: {content}\n"
+            )
+            
+            # 정보가 있는 경우에만 라인 추가 (깔끔하게)
+            if end_date: doc_str += f"마감일: {end_date}\n"
+            if method: doc_str += f"신청방법: {method}\n"
+            if link: doc_str += f"링크: {link}\n"
+            if category: doc_str += f"분야: {category}\n"
+            if target: doc_str += f"대상: {target}\n"
+            
+            formatted_results.append(doc_str)
+        
+        return "\n\n".join(formatted_results)
+
+
+    # 🌟 [프롬프트] 메타데이터 활용 지침 추가
     prompt_template = """
-    당신은 사용자에게 '지역 정책' 및 '채용 공고'를 쉽고 친절하게 안내하는 전문 AI 챗봇입니다.
-    항상 사용자의 관점에서 생각하며, 명확하고 신뢰할 수 있는 말투로 답변해 주세요.
-
-    [답변 생성 7원칙]
-    1.  **친절하고 전문적인 말투:** 항상 상냥하고 친절한 어조를 유지하며, 내용을 전달할 때는 **객관적이고 권위 있는** 용어를 사용해 신뢰감을 주세요.
-    2.  **가독성 있는 형식:** 답변이 길어질 경우, **줄바꿈**, **글머리 기호(•)**, **번호 매기기**를 적극적으로 사용해 내용을 명확하게 구분하여 가독성을 높여야 합니다.
+    당신은 사용자에게 '지역 정책' 및 '채용 공고'를 안내하는 똑똑한 AI 어시스턴트, **'Jobs(잡스)'**입니다.
     
-    3.  **(🚨정보 직접 제시 및 완전성):**
-        * **절대로 답변 내용에 내부 용어인 '[정책 데이터]', '[참고 자료]', 또는 '자세한 내용은 자료를 확인하세요'와 같은 회피성 문구를 언급하거나 포함해서는 안 됩니다.**
-        * **[정책 데이터]에 포함된 '제목(정책명)', '대상', '내용', '신청방법', '문의처', '링크' 등**의 **모든 상세 정보를 찾아서 사용자 답변에 직접, 완전하게 포함**시켜야 합니다.
+    [🧹 데이터 정제 및 필터링 규칙 (최우선 적용)]
+    1. **무의미한 알파벳/기호 절대 발설 금지:** 데이터에 "신청방법: A", "분야: B" 처럼 의미 없는 값이 있다면 언급하지 마세요.
+    2. **메타데이터 적극 활용:** 제공된 [검색 결과]에는 '마감일', '링크', '신청방법' 등의 정보가 포함되어 있습니다. 질문에 답변할 때 이 세부 정보를 빠짐없이 포함하세요.
+
+    [✨ 상황별 답변 가이드]
+    **Case 1. 인사 ("안녕", "누구야"):**
+    - "안녕하세요! 저는 Jobs입니다. 사용자님의 나이와 사는 곳을 분석해서 딱 맞는 정책과 일자리를 찾아드리는 역할을 합니다." (검색 결과 언급 X)
     
-    4.  **(🌟통합 및 적합성 검토):**
-        * **[다중 결과 통합]:** 만약 여러 개의 관련 정보(`{context}`)가 검색되었다면, 이를 통합하여 사용자 질문에 가장 적합한 **핵심 정보 1~2개**를 우선순위로 명확하게 제시하세요.
-        * **[유효성 검토]:** 정보에 유효 기간이나 마감일이 명시되어 있다면, 현재 유효한지 언급하거나 확인이 필요함을 안내하세요.
+    **Case 2. 정보 요청:**
+    - 자기소개 생략.
+    - 예: "네, (지역)의 (나이)세 청년이 지원 가능한 (제목)입니다. 마감일은 (날짜)까지이며, (방법)으로 신청하실 수 있습니다."
+    - **링크가 있다면 반드시 제공하세요.**
 
-    5.  **(✅정확성 및 안전성 확보):**
-        * 답변은 반드시 아래 [정책 데이터]에 근거해야 하며, 자료에 없는 내용을 추측하거나 지어내지 마세요.
-        * **[링크 규칙]:** '신청방법'이나 '링크' 등에 'http://' 또는 'https://'로 시작하는 실제 URL이 명확히 포함된 경우에만 해당 링크를 제시하며, **자료에 실제 URL이 없다면 절대 가상의 링크를 지어내지 마세요.**
+    [🔍 상세 정보 답변 규칙]
+    - 사용자가 "구체적으로?"라고 물으면, 문서 내용을 바탕으로 상세히 설명하되, 없으면 솔직히 없다고 말하세요.
 
-    6.  **정중한 거절:** [정책 데이터]를 검토해도 질문에 대한 적절한 정보를 찾을 수 없다면, "죄송합니다. 문의하신 내용에 대한 정보를 찾지 못했습니다. 더 구체적인 키워드로 질문해 주시겠어요?"와 같이 정중하게 답변하세요.
+    [🔵 맞춤형 매칭 지침]
+    - [👤 사용자 프로필 정보]와 비교하여 적합성을 판단하세요.
 
-    7.  **(➡️다음 행동 유도):** 답변을 완료한 후, 사용자에게 가장 유용할 만한 **다음 단계(Next Step)**를 제안하며 대화를 마무리합니다.
+    [🚫 형식 제한]
+    - 마크다운(Markdown), **볼드체** 사용 금지. 줄글로만 작성.
 
     ---
-    (참고: 아래 [이전 대화 기록]은 답변 생성을 위한 맥락 정보입니다.)
-    
+    [👤 사용자 프로필 정보]
+    {user_context_prompt}
+
     [이전 대화 기록]
     {chat_history}
     
-    (참고: 아래 [정책 데이터]는 현재 질문에 대한 검색 결과입니다.)
-
-    [정책 데이터]
+    [정책 및 채용 데이터 (검색 결과)]
     {context}
 
     [질문]
     {question}
 
-    [친절한 답변]
+    [Jobs의 답변]
     """
-    PROMPT = PromptTemplate(
-        template=prompt_template, input_variables=["context", "chat_history", "question"]
+    
+    PROMPT = PromptTemplate.from_template(prompt_template)
+
+    # 🌟 [LCEL 체인 구성] (기존 ConversationalRetrievalChain 대체)
+    # 1. 질문이 들어오면 -> 2. 검색기(retriever)가 문서를 찾고 -> 
+    # 3. format_docs_with_metadata가 메타데이터를 텍스트로 변환 -> 4. 프롬프트 -> 5. LLM
+    rag_chain = (
+        {
+            "context": itemgetter("question") | ensemble_retriever | format_docs_with_metadata,
+            "question": itemgetter("question"),
+            "chat_history": itemgetter("chat_history"),
+            "user_context_prompt": itemgetter("user_context_prompt"),
+        }
+        | PROMPT
+        | llm
+        | StrOutputParser()
     )
 
-    qa_chain = ConversationalRetrievalChain.from_llm(
-        llm=llm,
-        # ⭐️ 여기서 앙상블 검색기를 사용합니다.
-        retriever=ensemble_retriever,
-        combine_docs_chain_kwargs={"prompt": PROMPT},
-        return_source_documents=True
-    )
-
-    print("✅ RAG 챗봇 체인 초기화 완료 (정책+채용 통합).")
+    print("✅ RAG 챗봇 체인 초기화 완료 (LCEL 방식 + 메타데이터 연동).")
 
 except Exception as e:
     print(f"🚨 RAG 초기화 중 심각한 오류 발생: {e}")
-    print("API 키, Pinecone 인덱스 이름, 라이브러리 설치를 확인하세요.")
+    print("API 키(.env), Pinecone 인덱스 이름, 라이브러리 설치를 확인하세요.")
     exit(1)
 
 
@@ -142,6 +198,7 @@ app = FastAPI()
 class ChatRequest(BaseModel):
     message: str
     history: List[Dict[str, Any]] = []
+    user_profile: Dict[str, Any] = {}
 
 class ChatResponse(BaseModel):
     answer: str
@@ -152,67 +209,73 @@ async def ask_question(request: ChatRequest):
     try:
         user_message = request.message
         chat_history_list = request.history
+        user_profile = request.user_profile 
         
         print(f"Node.js로부터 받은 질문: {user_message}")
 
-        formatted_history = []
+        # 사용자 정보 포매팅
+        user_context_str = ""
+        user_keywords = "" 
+        
+        if user_profile and (user_profile.get("age") or user_profile.get("region")):
+            info_list = []
+            if user_profile.get("age") and user_profile.get("age") != "알 수 없음":
+                age_val = user_profile['age']
+                info_list.append(f"- 나이: {age_val}")
+                user_keywords += f" {age_val}" 
+            if user_profile.get("region") and user_profile.get("region") != "알 수 없음":
+                region_val = user_profile['region']
+                info_list.append(f"- 거주지: {region_val}")
+                user_keywords += f" {region_val}" 
+            
+            if info_list:
+                user_context_str = "\n".join(info_list)
+            else:
+                user_context_str = "(사용자 정보 없음)"
+        else:
+            user_context_str = "(로그인하지 않은 사용자 또는 정보 없음)"
+
+        # 대화 기록 포매팅 (String으로 변환)
+        formatted_history_str = ""
         user_msg = None
         for turn in chat_history_list:
             if turn.get("sender") == "user":
                 user_msg = turn.get("text", "")
             elif turn.get("sender") == "bot" and user_msg is not None:
-                formatted_history.append((user_msg, turn.get("text", "")))
+                formatted_history_str += f"User: {user_msg}\nBot: {turn.get('text', '')}\n"
                 user_msg = None 
 
-        response = qa_chain.invoke({
-            "question": user_message, 
-            "chat_history": formatted_history
+        # 🌟 검색어 보정 (Query Augmentation)
+        search_query = user_message
+        if "나" in user_message or "내" in user_message or "조건" in user_message or "추천" in user_message:
+            search_query += f" {user_keywords}"
+            print(f"🔍 보정된 검색 쿼리: {search_query}")
+
+        # 🌟 [LCEL 호출] invoke 사용
+        # 이제 chain 내부에서 검색(Retriever)과 포맷팅이 자동으로 일어납니다.
+        bot_reply = rag_chain.invoke({
+            "question": search_query, 
+            "chat_history": formatted_history_str,
+            "user_context_prompt": user_context_str 
         })
         
-        bot_reply = response['answer']
-        
-        # 출처 표시 로직 개선 (여러 인덱스에서 섞여 나올 수 있음)
-        source_doc = "출처 정보 없음"
-        if response.get('source_documents'):
-            # 가장 관련성 높은 첫 번째 문서의 메타데이터 확인
-            metadata = response['source_documents'][0].metadata
-            # 1. 채용 공고인 경우 'title'
-            # 2. 정책 데이터인 경우 'policy_name'
-            source_doc = metadata.get('title') or metadata.get('policy_name', '출처 정보 없음')
+        # 출처 표시 로직 (LCEL에서는 retriever 결과를 따로 가져오지 않으므로 심플하게 처리하거나,
+        # 필요하다면 chain을 수정해야 하지만, 일단 답변 품질 향상에 집중합니다.)
+        # 여기서는 답변에 집중하기 위해 source는 간략히 처리합니다.
+        source_doc = "검색된 문서 기반"
 
-        print(f"LLM이 생성한 답변: {bot_reply}")
-        print(f"답변 근거: {source_doc}")
+        print(f"Gemini 답변: {bot_reply}")
 
         return {"answer": bot_reply, "source": source_doc}
 
     except Exception as e:
         print(f"🚨 RAG 서버 처리 중 오류: {e}")
-        return {"answer": "죄송합니다, Python RAG 서버에서 답변 생성 중 오류가 발생했습니다.", "source": None}
+        import traceback
+        traceback.print_exc()
+        return {"answer": "죄송합니다, 답변 생성 중 오류가 발생했습니다.", "source": None}
 
 
 # --- 5. API 서버 실행 ---
 if __name__ == "__main__":
-    
-    print("--- [RAG 체인 통합 테스트 시작] ---")
-    try:
-        # 테스트 1: 정책 질문
-        test_query_1 = "광주 청년 정책 알려줘"
-        print(f"\n[테스트 1] 질문: {test_query_1}")
-        resp1 = qa_chain.invoke({"question": test_query_1, "chat_history": []})
-        print(f"답변: {resp1['answer'][:50]}...") # 너무 기니까 앞부분만
-
-        # 테스트 2: 채용 질문 (시연용 공고가 있다고 가정)
-        test_query_2 = "신입 개발자 채용 공고 있어?"
-        print(f"\n[테스트 2] 질문: {test_query_2}")
-        resp2 = qa_chain.invoke({"question": test_query_2, "chat_history": []})
-        print(f"답변: {resp2['answer'][:50]}...")
-
-        print("\n--- [✅ RAG 체인 통합 테스트 성공] ---")
-
-    except Exception as e:
-        print(f"--- [🚨 RAG 체인 통합 테스트 실패] ---")
-        print(f"오류 발생: {e}")
-        print("-----------------------------------")
-
     print(f"Python RAG API 서버를 8001번 포트에서 시작합니다 (http://localhost:8001)")
     run(app, host="0.0.0.0", port=8001)
