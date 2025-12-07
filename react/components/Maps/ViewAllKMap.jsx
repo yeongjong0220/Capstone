@@ -43,7 +43,7 @@ const defaultmarkImage =
     },
 }
 
-
+const date = new Date();
 
 const ViewAllKMap = () => {
     const [posts, setPosts] = useState([]);
@@ -166,7 +166,7 @@ const ViewAllKMap = () => {
             data.routes[0].sections[0].roads.forEach(router => {
                 router.vertexes.forEach((vertex, index) => {
                     if (index % 2 === 0) {
-                        linePath.push({lat : router.vertexes[index + 1], lng : router.vertexes[index]});
+                        linePath.push({ lat: router.vertexes[index + 1], lng: router.vertexes[index] });
                     }
                 });
             });
@@ -176,12 +176,14 @@ const ViewAllKMap = () => {
         }
     }
 
-    const EventMarkerContainer = ({ position, content, onClick, approved, isClicked }) => {
+    const EventMarkerContainer = ({ position, content, onClick, approved, isClicked, start_date, end_date }) => {
         //const map = useMap()
         const [isVisible, setIsVisible] = useState(false)
-
+        const startDate = new Date(start_date);
+        const endDate = new Date(end_date);
+        endDate.setHours(23, 59, 59, 999);
         return (
-            approved == 'Y' && (
+            (approved === 'Y' && (startDate.getTime() <= date.getTime() && date.getTime() <= endDate.getTime())) && (
                 <MapMarker
                     position={position} // 마커를 표시할 위치
                     onMouseOver={() => setIsVisible(true)}
@@ -230,6 +232,8 @@ const ViewAllKMap = () => {
                         position={{ lat: value.latitude, lng: value.longitude }}
                         content={value.title}
                         approved={value.approved}
+                        start_date={value.apply_start_date}
+                        end_date={value.apply_end_date}
                         onClick={(marker) => {
                             setSeletedMarker(index);
                             console.log(index);
@@ -270,6 +274,7 @@ const ViewAllKMap = () => {
                     strokeStyle={"solid"} // 선의 스타일입니다
                 />
             </Map>
+            <button onClick={logpost}></button>
             <button onClick={getCarDirection}>길찾기</button>
         </div>
     )
