@@ -5,6 +5,8 @@ import axios from 'axios'
 const GET_POSTS = import.meta.env.VITE_GET_POSTS;
 const KAKAO_REST_API = import.meta.env.VITE_KAKAO_REST_API;
 
+
+// 얘들은 리스트로 둬야 잘나옴 (JSON으로 하면 터지진 않는데.. 뭐냐 스프라이트가 짤림)
 const startImage = {
     src: "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/red_b.png",
     size: [50, 45],
@@ -15,6 +17,7 @@ const startImage = {
     },
 }
 
+// 얘도 리스트로 둬야 잘나옴
 const startDragImage = {
     src: "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/red_drag.png",
     size: [50, 64],
@@ -24,22 +27,22 @@ const startDragImage = {
     },
 }
 
+
+// ... 터지는게 이미지때문이었는데 내가 보니까 사용자 컴포넌트로 감싸면 뭔가 예상치 못한 오류가 일어나서 size, offset 정의가 리스트가 아니고 JSON방식으로 해야하는듯?
 const endImage = {
     src: "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/blue_b.png",
-    size: [50, 45],
+    size: { width: 50, height: 45 },
     options: {
-        offset: [25, 45], // 마커의 좌표에 일치시킬 이미지 안의 좌표 (기본값: 이미지의 가운데 아래)
-        spriteOrigin: { x: 0, y: 0 } // 스프라이트의 좌상단 위치
+        offset: { x: 15, y: 45 },
+        spriteOrigin: { x: 0, y: 0 }
     },
 }
 
-const defaultmarkImage =
-{
+const defaultmarkImage = {
     src: "http://t1.daumcdn.net/mapjsapi/images/marker.png",
-    size: [29, 42],
+    size: { width: 29, height: 42 },
     options: {
-        offset: [14, 42],
-        spriteOrigin: { x: 14, y: 42 } // 스프라이트의 좌상단 위치
+        offset: { x: 14, y: 42 },
     },
 }
 
@@ -189,6 +192,7 @@ const ViewAllKMap = () => {
                     onMouseOver={() => setIsVisible(true)}
                     onMouseOut={() => setIsVisible(false)}
                     onClick={onClick}
+                    image = { isClicked ? endImage : defaultmarkImage}// 이걸 넣으면 카카오 맵이 터짐 왜그럴까?
                 >
                     {isVisible &&
                         (
