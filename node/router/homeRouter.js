@@ -5,7 +5,7 @@ const path = require("path");
 dotenv.config({ path: path.join(__dirname, '..', 'env', '.env') });
 const jwt = require('jsonwebtoken');
 
-const { JWT_SECRET_KEY } = process.env;
+const { JWT_SECRET_KEY, CHATBOT_SERVER } = process.env;
 
 // db 연결
 const { registerMember, confirmMember, setCodeForChPw, changePw } = require("../models/register_query.js");
@@ -147,7 +147,7 @@ router.post('/api/chat', async (req, res) => {
         console.log('사용자 프로필 정보:', user_profile); // 로그로 확인
 
         // 2. Python RAG API 서버(8001번 포트)에 요청 전송
-        const ragApiUrl = 'http://127.0.0.1:8001/ask';
+        const ragApiUrl = CHATBOT_SERVER+'/ask';
 
         const ragResponse = await fetch(ragApiUrl, {
             method: 'POST',

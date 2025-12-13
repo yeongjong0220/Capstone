@@ -122,6 +122,8 @@ const SendButton = styled.button`
   }
 `;
 
+const CHAT_API = import.meta.env.VITE_CHAT_API;
+
 // --- [기능] Chat 컴포넌트 ---
 const Chat = () => {
   const [messages, setMessages] = useState([
@@ -166,7 +168,7 @@ const Chat = () => {
     console.log("전송할 사용자 프로필:", userProfile);
 
     try {
-      const response = await fetch('http://localhost:8000/api/chat', {
+      const response = await fetch(CHAT_API , {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
