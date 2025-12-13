@@ -16,7 +16,7 @@ const corsOptions = {
 app.use(cors(corsOptions)); //  CORS 미들웨어 적용 (서버간 통신 규약 완화)
 app.use(express.json()); // JSON 파싱 미들웨어
 
-const homeRouter = require("../node/router/homeRouter.js");
+const homeRouter = require("./router/homeRouter.js");
 
 app.use('/', homeRouter);
 

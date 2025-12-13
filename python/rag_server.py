@@ -1,5 +1,6 @@
 import os
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware # 🌟 [추가] CORS 미들웨어
 from pydantic import BaseModel
 from uvicorn import run
 from dotenv import load_dotenv
@@ -86,7 +87,7 @@ try:
     )
 
     # ---------------------------------------------------------
-    # 🌟 [핵심 기능 추가] 메타데이터 포맷팅 함수
+    # 🌟 [핵심 기능] 메타데이터 포맷팅 함수
     # Pinecone의 'metadata' 필드를 끄집어내어 텍스트로 변환합니다.
     # ---------------------------------------------------------
     def format_docs_with_metadata(docs):
@@ -195,6 +196,16 @@ except Exception as e:
 # --- 4. FastAPI 서버 설정 ---
 app = FastAPI()
 
+# 🌟 [추가] CORS 미들웨어 설정
+# 모든 도메인(origins=["*"])에서의 접근을 허용합니다.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 class ChatRequest(BaseModel):
     message: str
     history: List[Dict[str, Any]] = []
@@ -259,9 +270,7 @@ async def ask_question(request: ChatRequest):
             "user_context_prompt": user_context_str 
         })
         
-        # 출처 표시 로직 (LCEL에서는 retriever 결과를 따로 가져오지 않으므로 심플하게 처리하거나,
-        # 필요하다면 chain을 수정해야 하지만, 일단 답변 품질 향상에 집중합니다.)
-        # 여기서는 답변에 집중하기 위해 source는 간략히 처리합니다.
+        # 출처 표시 로직
         source_doc = "검색된 문서 기반"
 
         print(f"Gemini 답변: {bot_reply}")
@@ -275,7 +284,7 @@ async def ask_question(request: ChatRequest):
         return {"answer": "죄송합니다, 답변 생성 중 오류가 발생했습니다.", "source": None}
 
 
-# --- 5. API 서버 실행 ---
+# — 5. API 서버 실행 —
 if __name__ == "__main__":
     print(f"Python RAG API 서버를 8001번 포트에서 시작합니다 (http://localhost:8001)")
     run(app, host="0.0.0.0", port=8001)

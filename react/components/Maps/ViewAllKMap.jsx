@@ -278,7 +278,7 @@ const ViewAllKMap = () => {
                     strokeStyle={"solid"} // 선의 스타일입니다
                 />
             </Map>
-            <button onClick={logpost}></button>
+            <button onClick={logpost} hidden></button>
             <button onClick={getCarDirection}>길찾기</button>
         </div>
     )
