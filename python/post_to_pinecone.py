@@ -68,8 +68,8 @@ def process_new_postings():
 
         query = f"""
             SELECT * FROM {TABLE_NAME} 
-            WHERE status = 'published' 
-            AND approved = 'Y' 
+            WHERE
+            approved = 'Y' 
             AND del = 'N' 
             AND (is_embedded = 'N' OR is_embedded IS NULL)
         """
@@ -161,4 +161,5 @@ if __name__ == "__main__":
             process_new_postings()
             time.sleep(CHECK_INTERVAL)
     except KeyboardInterrupt:
+
         print("\n🛑 시스템을 종료합니다.")
