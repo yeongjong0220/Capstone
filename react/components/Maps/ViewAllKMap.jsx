@@ -52,8 +52,8 @@ const ViewAllKMap = () => {
     const [posts, setPosts] = useState([]);
     const [state, setState] = useState({
         center: {  // gps로 측정한 내 현재 위치
-            lat: 33.450701,
-            lng: 126.570667,
+            lat: 35.1580723,
+            lng: 126.850382,
         },
         errMsg: null,
         isLoading: true,
