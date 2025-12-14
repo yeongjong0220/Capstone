@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { AuthContext } from '../contexts/AuthContext'; 
+import { AuthContext, useAuth } from '../contexts/AuthContext'; 
 
 // --- [디자인] styled-components 정의 ---
 
@@ -137,7 +137,7 @@ const Chat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const { isLoggedIn, age, region, gender } = useContext(AuthContext); 
+  const { isLoggedIn, age, region, gender } = useAuth(); 
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -159,6 +159,8 @@ const Chat = () => {
     setInput('');
     setIsLoading(true);
 
+    console.log(age, region, gender, isLoggedIn);
+    
     const userProfile = isLoggedIn ? {
         age: age || "알 수 없음",
         region: region || "알 수 없음",
